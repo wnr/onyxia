@@ -1,5 +1,4 @@
-(ns onyxia.core
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
+(ns example-app.main
   (:require [ysera.error :refer [error]]
             [onyxia.dom-operator :as dom-operator]
             [onyxia.view-definitions :as view-definitions]
@@ -7,7 +6,7 @@
             [onyxia.output-definitions :as output-definitions]
             [onyxia.input.parent-size]
             [onyxia.output.modal]
-            [onyxia.app :refer [get-app-view-definition]]))
+            [example-app.app :refer [get-app-view-definition]]))
 
 ;;; Open Problems:
 ;; * How to handle the uniqueness of the component definition names?

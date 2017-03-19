@@ -29,16 +29,16 @@
                 ;; the presence of a :figwheel configuration here
                 ;; will cause figwheel to inject the figwheel client
                 ;; into your build
-                :figwheel {:on-jsload "onyxia.core/on-js-reload"
+                :figwheel {:on-jsload "example-app.main/on-js-reload"
                            ;; :open-urls will pop open your application
                            ;; in the default browser once Figwheel has
                            ;; started and complied your application.
                            ;; Comment this out once it no longer serves you.
                            :open-urls ["http://localhost:3449/index.html"]}
 
-                :compiler {:main onyxia.core
+                :compiler {:main example-app.main
                            :asset-path "js/compiled/out"
-                           :output-to "resources/public/js/compiled/onyxia.js"
+                           :output-to "resources/public/js/compiled/example-app.js"
                            :output-dir "resources/public/js/compiled/out"
                            :source-map-timestamp true
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
@@ -50,8 +50,8 @@
                ;; lein cljsbuild once min
                {:id "min"
                 :source-paths ["src"]
-                :compiler {:output-to "resources/public/js/compiled/onyxia.js"
-                           :main onyxia.core
+                :compiler {:output-to "resources/public/js/compiled/example-app.js"
+                           :main example-app.main
                            :optimizations :advanced
                            :pretty-print false}}]}
 

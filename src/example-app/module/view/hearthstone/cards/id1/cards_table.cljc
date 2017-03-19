@@ -1,8 +1,8 @@
-(ns onyxia.module.view.hearthstone.cards.id1.cards-table
+(ns example-app.module.view.hearthstone.cards.id1.cards-table
   (:require
    [ysera.test :refer [is= is]]
-   [onyxia.module.view.hearthstone.cards.id1.card-details :as card-details]
-   [onyxia.module.view.hearthstone.cards.id1.mocks :as mocks]))
+   [example-app.module.view.hearthstone.cards.id1.card-details :as card-details]
+   [example-app.module.view.hearthstone.cards.id1.mocks :as mocks]))
 
 (defn- create-state []
   {:expanded-card-detail-ids #{}})

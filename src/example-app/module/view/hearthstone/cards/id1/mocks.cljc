@@ -1,4 +1,4 @@
-(ns onyxia.module.view.hearthstone.cards.id1.mocks)
+(ns example-app.module.view.hearthstone.cards.id1.mocks)
 
 (def get-cards {:cards [{:id "ysera"
                          :name "Ysera"

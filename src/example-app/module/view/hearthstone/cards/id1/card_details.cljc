@@ -1,4 +1,4 @@
-(ns onyxia.module.view.hearthstone.cards.id1.card-details
+(ns example-app.module.view.hearthstone.cards.id1.card-details
   (:require
    [ysera.test :refer [is= is]]))
 
