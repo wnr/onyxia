@@ -10,8 +10,8 @@
                  [org.clojure/clojurescript "1.9.495"]
                  [org.clojure/core.async "0.3.442"
                   :exclusions [org.clojure/tools.reader]]
-                 [cljsjs/react "15.4.2-0"]
-                 [cljsjs/react-dom "15.4.2-0"]
+                 [cljsjs/react "15.4.2-2"]
+                 [cljsjs/react-dom "15.4.2-2"]
                  [ysera "1.0.1"]
                  [camel-snake-kebab "0.4.0"]] ;; For converting snake-case to camel-case, etc.
 

@@ -19,7 +19,6 @@
    :output            [{:name      "modal"
                         :get-modal (fn [{state :view-state
                                          card  :card}]
-                                     (println "get-modal" state)
                                      (when (reading-more-about-card? state)
                                        {:title (str "Om " (:category card))
                                         :body  [:p "Bla bla bla..."]}))}]

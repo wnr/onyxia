@@ -25,13 +25,23 @@
                  [[:a] [:b] [:c] [:d]])
             (is= (clean-children
                   [[:p] [[:a] [:b]]])
-                 [[:p] [:a] [:b]]))}
+                 [[:p] [:a] [:b]])
+            (is= (clean-children
+                  ["Hello"])
+                 ["Hello"])
+            (is= (clean-children
+                  [0])
+                 [0]))}
   clean-children [seq]
-  (remove empty?
+  (remove (fn [value]
+            (or (nil? value)
+                (and (sequential? value) (empty? value))))
           (reduce (fn [result entry]
-                    (if (sequential? (first entry))
-                      (concat result (clean-children entry))
-                      (conj result entry)))
+                    (if (not (sequential? entry))
+                      (conj result entry)
+                      (if (sequential? (first entry))
+                        (concat result (clean-children entry))
+                        (conj result entry))))
                   []
                   seq)))
 
@@ -62,6 +72,9 @@
                   [:h1 "Hello"])
                  [:h1 {} ["Hello"]])
             (is= (formalize-element
+                  [:h1 0])
+                 [:h1 {} [0]])
+            (is= (formalize-element
                   [:div [:p] [[:a] [:b]]])
                  [:div {} [[:p] [:a] [:b]]]))}
     formalize-element [element]
@@ -77,12 +90,16 @@
                 {})
            (is= (style->react-style {"position" "relative"})
                 {"position" "relative"})
+           (is= (style->react-style {"top" 0})
+                {"top" "0"})
            (is= (style->react-style {"padding-left" "1px solid black"})
                 {"paddingLeft" "1px solid black"}))}
   [style]
   (reduce (fn [react-style [key value]]
             (let [key (name key)
-                  value (name value)
+                  value (if (number? value)
+                          (str value)
+                          (name value))
                   react-key (condp re-seq key
                               ;; single word keys such as "position", "left", etc.
                               #"^\w+$" key

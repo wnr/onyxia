@@ -63,7 +63,7 @@
         current-view (get-current-modal-view state)]
     (js/console.log state)
     (when (not= wanted-view current-view)
-      (if wanted-view 
+      (if wanted-view
         (render! (modal-component wanted-view))
         (when current-view
           (render! nil)))
@@ -71,7 +71,7 @@
 
 (add-watch system-atom
            :modal-handler
-           (fn [key atom old-state new-state] 
+           (fn [key atom old-state new-state]
              (handle-current-modal-view!)))
 
 
@@ -82,9 +82,8 @@
 (defn get-definition [{render :render}]
   (swap! system-atom assoc :render render) ;; TODO: Not nice.
   {:name         "modal"
-   :handle! (fn [output state] 
+   :handle! (fn [output state]
               (let [modal-view ((:get-modal output) state)]
-                (println modal-view)
                 (if modal-view
                   (swap! system-atom set-wanted-modal-view modal-view)
                   (swap! system-atom clear-wanted-modal-view))))})
