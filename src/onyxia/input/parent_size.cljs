@@ -162,7 +162,8 @@
                                                       (update-element-state! element assoc :last-known-height element-height)))})))}))]
     (if (not (system-ready!?))
       (add-system-ready-listener! (fn []
-                                    (_install!))))))
+                                    (_install!)))
+      (_install!))))
 
 (when (nil? (:scrollbar-size @system-state-atom))
   (add-pending-operation! {:operation :write-dom
@@ -193,6 +194,7 @@
     (:width state)
     (:height state)))
 
+;; TODO: Cleanup when unmount
 (defn get-definition []
   {:name         "parent-size"
    :get-instance (fn [{on-state-changed :on-state-changed
@@ -204,16 +206,16 @@
                                            (not (nil? (get-size-input-value @state-atom dimension))))
                       :get-value         (fn []
                                            (get-size-input-value @state-atom dimension))
-                      :componentDidMount (fn [{element :element :as options}]
-                                           (install! {:element   element
-                                                      :on-resize (fn [{width :width height :height}]
-                                                                   (swap! state-atom (fn [state]
-                                                                                       (merge state {:width  width
-                                                                                                     :height height})))
-                                                                   (on-state-changed))})
-                                           {:operation :read-dom
-                                            :execute!  (fn []
-                                                         (swap! state-atom (fn [state]
-                                                                             (merge state {:width  (.-offsetWidth element)
-                                                                                           :height (.-offsetHeight element)})))
-                                                         (on-state-changed))})}))})
+                      :did-mount (fn [{element :element :as options}]
+                                   (install! {:element   element
+                                              :on-resize (fn [{width :width height :height}]
+                                                           (swap! state-atom (fn [state]
+                                                                               (merge state {:width  width
+                                                                                             :height height})))
+                                                           (on-state-changed))})
+                                   {:operation :read-dom
+                                    :execute!  (fn []
+                                                 (swap! state-atom (fn [state]
+                                                                     (merge state {:width  (.-offsetWidth element)
+                                                                                   :height (.-offsetHeight element)})))
+                                                 (on-state-changed))})}))})

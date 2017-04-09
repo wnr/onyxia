@@ -1,6 +1,6 @@
 (ns example-app.main
   (:require [ysera.error :refer [error]]
-            [onyxia.dom-operator :as dom-operator]
+            [onyxia.react :refer [render!]]
             [onyxia.view-definitions :as view-definitions]
             [onyxia.input-definitions :as input-definitions]
             [onyxia.output-definitions :as output-definitions]
@@ -17,12 +17,12 @@
 
 (input-definitions/add! (onyxia.input.parent-size/get-definition))
 
-(output-definitions/add! (onyxia.output.modal/get-definition {:render dom-operator/render!}))
+(output-definitions/add! (onyxia.output.modal/get-definition {:render render!}))
 
 (view-definitions/add-with-dependencies! (get-app-view-definition))
 
 (defn render-app! []
-  (dom-operator/render!
+  (render!
    [:view {:name (:name (get-app-view-definition))}]
    (js/document.getElementById "app")))
 
