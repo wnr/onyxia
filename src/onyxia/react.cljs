@@ -37,8 +37,8 @@
                     {:view-state (deref (.-view-state-atom component))})
              (.-input component)))
 
-(defn- did-render! [component]
-  (when-let [did-render-fn (:did-render (aget component "props" "definition"))]
+(defn- did-render! [component definition]
+  (when-let [did-render-fn (:did-render definition)]
     ;; TODO: Not nice to merge like this. What if some input to this view is called "element"?
     (did-render-fn (merge {:element (react-instance->parent-element component)
                            :add-pending-operation! add-pending-operation!}
@@ -75,7 +75,7 @@
                                                                                                              {:element parent-element}))))
                                                                                 {}
                                                                                 (.-input this))
-                                                                     (did-render! this))
+                                                                     (did-render! this definition))
                                                             nil))
                                   :render               (fn []
                                                           (this-as this
@@ -94,7 +94,7 @@
                                                                                                          (swap! view-state-atom handle-fn (second data)))))}))))
                                   :componentDidUpdate (fn []
                                                         (this-as this
-                                                                 (did-render! this)))
+                                                                 (did-render! this definition)))
                                   :componentWillUnmount (fn []
                                                           (this-as this
                                                                    (let [;; TODO: Should this be the root element of the view instead?
@@ -105,8 +105,7 @@
                                                                                     ((:will-unmount input)
                                                                                      {:element parent-element})))
                                                                                 {}
-                                                                                (.-input this))
-                                                                     (did-render! this))
+                                                                                (.-input this)))
                                                             nil))
                                   :onStateChanged       (fn []
                                                           (this-as this
