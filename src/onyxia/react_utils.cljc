@@ -33,6 +33,8 @@
           {}
           style))
 
+; TODO: Would be nice to map all these https://github.com/facebook/react/blob/b1b4a2fb252f26fe10d29ba60d85ff89a85ff3ec/src/renderers/dom/shared/SVGDOMPropertyConfig.js
+
 (defn
   ^{:test (fn []
             ;; Keep unknown attributes unchanged.
@@ -57,6 +59,6 @@
     (-> attrs
         (replace-key :class :className (:class attrs))
         (replace-value :style style->react-style)
-        (replace-key :on-click :onClick (fn [event] (on-dom-event {:type               :on-click
+        (replace-key :on-click :onClick (fn [event] (on-dom-event {:type :on-click
                                                                    :dom-event :event
-                                                                   :data      (:on-click attrs)}))))))
+                                                                   :data (:on-click attrs)}))))))
