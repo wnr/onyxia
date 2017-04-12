@@ -83,15 +83,15 @@
                                                               (when-not (->> (.-input this)
                                                                              (vals)
                                                                              (some (fn [input]
-                                                                                     (not ((:ready? (:instance input))))))))
-                                                              (create-react-element ((:render definition)
-                                                                                     (get-view-input this))
-                                                                                    {:on-dom-event (fn [{type :type
-                                                                                                         data :data}]
-                                                                                                     (let [handle-fn ((first data) (:events definition))]
-                                                                                                       (if (not handle-fn)
-                                                                                                         (throw (js/Error (str "Cannot find " (first data) " function in definition " (:name definition))))
-                                                                                                         (swap! view-state-atom handle-fn (second data)))))}))))
+                                                                                     (not ((:ready? (:instance input)))))))
+                                                                (create-react-element ((:render definition)
+                                                                                       (get-view-input this))
+                                                                                      {:on-dom-event (fn [{type :type
+                                                                                                           data :data}]
+                                                                                                       (let [handle-fn ((first data) (:events definition))]
+                                                                                                         (if (not handle-fn)
+                                                                                                           (throw (js/Error (str "Cannot find " (first data) " function in definition " (:name definition))))
+                                                                                                           (swap! view-state-atom handle-fn (second data)))))})))))
                                   :componentDidUpdate (fn []
                                                         (this-as this
                                                                  (did-render! this definition)))
