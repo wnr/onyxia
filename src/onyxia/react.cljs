@@ -71,11 +71,9 @@
                                                                                         (:input definition))))
                                                                      (add-watch view-state-atom :renderer (fn [_ _ _ _] (.onStateChanged this))))))
                                   :componentDidMount    (fn []
-                                                          (println "did mount" (:name definition))
                                                           (this-as this
                                                                    (let [;; TODO: Should this be the root element of the view instead?
                                                                          parent-element (react-instance->parent-element this)]
-                                                                     ; (println (:name definition) "did-mount")
                                                                      (reduce-kv (fn [input-state input-name {input :instance}]
                                                                                   (when (:did-mount input)
                                                                                     (add-pending-operation! ((:did-mount input)
@@ -106,11 +104,9 @@
                                                         (this-as this
                                                                  (did-render! this definition)))
                                   :componentWillUnmount (fn []
-                                                          (println "will unmount" (:name definition))
                                                           (this-as this
                                                                    (let [;; TODO: Should this be the root element of the view instead?
                                                                          parent-element (react-instance->parent-element this)]
-                                                                     ; (println (:name definition) "componentDidMount")
                                                                      (reduce-kv (fn [input-state input-name {input :instance}]
                                                                                   (when (:will-unmount input)
                                                                                     ((:will-unmount input)
@@ -119,7 +115,6 @@
                                                                                 (.-input this)))
                                                             nil))
                                   :onStateChanged       (fn []
-                                                          (println "state changed" (:name definition))
                                                           (this-as this
                                                                    (reduce (fn [_ output]
                                                                              (let [output-definition (output-definitions/get! (:name output))]
