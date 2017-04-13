@@ -44,27 +44,34 @@
                            :add-pending-operation! add-pending-operation!}
                           (get-view-input component)))))
 
+(defn- should-render? [component definition]
+  (let [should-render?-fn (:should-render? definition)]
+    (if should-render?-fn
+      (should-render?-fn (merge (get-view-input component)))
+      true)))
+
 (defn create-view-component
   [definition]
   (js/React.createClass (clj->js {:displayName          (:name definition)
                                   :componentWillMount   (fn []
-                                                          (this-as this
-                                                                   (if (:input definition)
-                                                                     (set! (.-input this)
-                                                                           (reduce-kv (fn [input-state input-name input]
-                                                                                        (assoc input-state
-                                                                                               input-name
-                                                                                               {:instance ((:get-instance (input-definitions/get! (:name input)))
-                                                                                                           (merge (dissoc input :name)
-                                                                                                                  {:on-state-changed (fn []
-                                                                                                                                       (.onStateChanged this))}))}))
-                                                                                      {}
-                                                                                      (:input definition))))
-                                                                   (let [view-state-atom (atom (when (:get-initial-state definition)
-                                                                                                 ((:get-initial-state definition))))]
-                                                                     (add-watch view-state-atom :renderer (fn [_ _ _ _] (.onStateChanged this)))
-                                                                     (set! (.-view-state-atom this) view-state-atom))))
+                                                          (let [view-state-atom (atom (when (:get-initial-state definition)
+                                                                                        ((:get-initial-state definition))))]
+                                                            (this-as this
+                                                                     (set! (.-view-state-atom this) view-state-atom)
+                                                                     (if (:input definition)
+                                                                       (set! (.-input this)
+                                                                             (reduce-kv (fn [input-state input-name input]
+                                                                                          (assoc input-state
+                                                                                                 input-name
+                                                                                                 {:instance ((:get-instance (input-definitions/get! (:name input)))
+                                                                                                             (merge (dissoc input :name)
+                                                                                                                    {:on-state-changed (fn []
+                                                                                                                                         (.onStateChanged this))}))}))
+                                                                                        {}
+                                                                                        (:input definition))))
+                                                                     (add-watch view-state-atom :renderer (fn [_ _ _ _] (.onStateChanged this))))))
                                   :componentDidMount    (fn []
+                                                          (println "did mount" (:name definition))
                                                           (this-as this
                                                                    (let [;; TODO: Should this be the root element of the view instead?
                                                                          parent-element (react-instance->parent-element this)]
@@ -92,10 +99,14 @@
                                                                                                          (if (not handle-fn)
                                                                                                            (throw (js/Error (str "Cannot find " (first data) " function in definition " (:name definition))))
                                                                                                            (swap! view-state-atom handle-fn (second data)))))})))))
+                                  :shouldComponentUpdate (fn []
+                                                           (this-as this
+                                                                    (should-render? this definition)))
                                   :componentDidUpdate (fn []
                                                         (this-as this
                                                                  (did-render! this definition)))
                                   :componentWillUnmount (fn []
+                                                          (println "will unmount" (:name definition))
                                                           (this-as this
                                                                    (let [;; TODO: Should this be the root element of the view instead?
                                                                          parent-element (react-instance->parent-element this)]
@@ -108,13 +119,15 @@
                                                                                 (.-input this)))
                                                             nil))
                                   :onStateChanged       (fn []
+                                                          (println "state changed" (:name definition))
                                                           (this-as this
                                                                    (reduce (fn [_ output]
                                                                              (let [output-definition (output-definitions/get! (:name output))]
                                                                                ((:handle! output-definition) output (get-view-input this))))
                                                                            nil
                                                                            (:output definition))
-                                                                   (.forceUpdate this)))})))
+                                                                   (when (should-render? this definition)
+                                                                     (.forceUpdate this))))})))
 
 (defn- definition->component
   [definition]
@@ -142,11 +155,10 @@
     ;; A view (collection of html element with a lifecycle) is to be rendered.
     (= (first vdom-element) :view)
     (let [attributes (second vdom-element)
-          name       (:name attributes)
-          input      (or (:input attributes) {})
-          definition (view-definitions/get! name)]
+          definition (or (:definition attributes) (view-definitions/get! (:name attributes)))
+          input      (or (:input attributes) {})]
       (when-not definition
-        (error "Unable to find view definition with name " name))
+        (error (str "Unable to find view definition, " vdom-element)))
       (js/React.createElement (definition->component definition)
                               #js{:input input}))
 
