@@ -162,7 +162,7 @@
     (let [vdom-element       (vdom/formalize-element vdom-element)
           children           (nth vdom-element 2)
           react-element-args (concat [(name (first vdom-element))
-                                      (clj->js (map-to-react-attributes (second vdom-element) {:on-dom-event on-dom-event}))]
+                                      (clj->js (map-to-react-attributes (first vdom-element) (second vdom-element) {:on-dom-event on-dom-event}))]
                                      (clj->js (if (and (= (count children) 1)
                                                        (or (string? (first children))
                                                            (number? (first children))))
