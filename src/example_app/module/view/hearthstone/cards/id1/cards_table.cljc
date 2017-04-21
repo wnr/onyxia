@@ -53,9 +53,8 @@
     (collapse-card-detail state id)
     (expand-card-detail state id)))
 
-(defn get-view-definition []
+(def view-definition
   {:name              "view.hearthstone.cards.id1/cards-table"
-   :dependencies      [(card-details/get-view-definition)]
    :input             {:size {:name      "parent-size"
                               :dimension :width}}
    :get-initial-state create-state
@@ -80,6 +79,6 @@
                                    (when (card-detail-expanded? view-state (:id card))
                                      [:tr
                                       [:td {:colSpan 3}
-                                       [:view {:name  (:name (card-details/get-view-definition))
-                                               :input {:card card}}]]])]) ;; data
+                                       [:view {:definition card-details/view-definition
+                                               :input {:card card}}]]])])
                                 (:cards mocks/get-cards))]]])})

@@ -11,7 +11,7 @@
 (defn toggle-read-more-about-card [state card]
   (assoc state :read-more (not (reading-more-about-card? state))))
 
-(defn get-view-definition []
+(def view-definition
   {:name              "view.hearthstone.cards.id1/card-details"
    :input             {:size {:name      "parent-size"
                               :dimension :width}}

@@ -30,7 +30,10 @@
   (assoc state :current-modal-view view))
 
 (defn render! [view]
-  ((:render @system-atom) view (:modal-element @system-atom)))
+  ((:render @system-atom) {:view view
+                           :target-element (:modal-element @system-atom)
+                           ;; TODO: How to handle input/output definitions?
+                           }))
 
 (defn modal-component [{title :title
                         body  :body}]

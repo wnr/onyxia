@@ -4,8 +4,6 @@
             [onyxia.vdom :as vdom]
             [ysera.error :refer [error]]
             [onyxia.view-definitions :as view-definitions]
-            [onyxia.input-definitions :as input-definitions]
-            [onyxia.output-definitions :as output-definitions]
             [onyxia.dom-operator :refer [add-pending-operation!]]))
 
 (def component-cache (atom {}))
@@ -50,8 +48,24 @@
       (should-render?-fn (merge (get-view-input component)))
       true)))
 
+(defn- get-input-definition
+  [input-definitions name]
+  (let [input-definition (get input-definitions name)]
+    (when (not input-definition)
+      (error "No input-definition found for input " name))
+    input-definition))
+
+(defn- get-output-definition
+  [output-definitions name]
+  (let [output-definition (get output-definitions name)]
+    (when (not output-definition)
+      (error "No output-definition found for output " name))
+    output-definition))
+
 (defn create-view-component
-  [definition]
+  [{definition :definition
+    input-definitions :input-definitions
+    output-definitions :output-definitions}]
   (js/React.createClass (clj->js {:displayName          (:name definition)
                                   :componentWillMount   (fn []
                                                           (let [view-state-atom (atom (when (:get-initial-state definition)
@@ -63,7 +77,7 @@
                                                                              (reduce-kv (fn [input-state input-name input]
                                                                                           (assoc input-state
                                                                                                  input-name
-                                                                                                 {:instance ((:get-instance (input-definitions/get! (:name input)))
+                                                                                                 {:instance ((:get-instance (get-input-definition input-definitions (:name input)))
                                                                                                              (merge (dissoc input :name)
                                                                                                                     {:on-state-changed (fn []
                                                                                                                                          (.onStateChanged this))}))}))
@@ -96,7 +110,9 @@
                                                                                                        (let [handle-fn ((first data) (:events definition))]
                                                                                                          (if (not handle-fn)
                                                                                                            (throw (js/Error (str "Cannot find " (first data) " function in definition " (:name definition))))
-                                                                                                           (swap! view-state-atom handle-fn (second data)))))})))))
+                                                                                                           (swap! view-state-atom handle-fn (second data)))))
+                                                                                       :input-definitions input-definitions
+                                                                                       :output-definitions output-definitions})))))
                                   :shouldComponentUpdate (fn []
                                                            (this-as this
                                                                     (should-render? this definition)))
@@ -117,7 +133,7 @@
                                   :onStateChanged       (fn []
                                                           (this-as this
                                                                    (reduce (fn [_ output]
-                                                                             (let [output-definition (output-definitions/get! (:name output))]
+                                                                             (let [output-definition (get-output-definition output-definitions (:name output))]
                                                                                ((:handle! output-definition) output (get-view-input this))))
                                                                            nil
                                                                            (:output definition))
@@ -125,15 +141,23 @@
                                                                      (.forceUpdate this))))})))
 
 (defn- definition->component
-  [definition]
+  [{definition :definition
+    input-definitions :input-definitions
+    output-definitions :output-definitions
+    :as arguments}]
+  ;; Currently not caring about whether input-definitions have changed.
   (let [cached-component (get @component-cache definition)]
     (if cached-component
       cached-component
-      (let [component (create-view-component definition)]
+      (let [component (create-view-component arguments)]
         (swap! component-cache assoc definition component)
         component))))
 
-(defn- create-react-element [vdom-element {on-dom-event :on-dom-event}]
+(defn- create-react-element
+  [vdom-element {on-dom-event :on-dom-event
+                 input-definitions :input-definitions
+                 output-definitions :output-definitions
+                 :as system-options}]
   (ensure-global-react!)
   (cond
     ;; React.createElement cares about children ordering, so it is important to keep nil children.
@@ -150,11 +174,13 @@
     ;; A view (collection of html element with a lifecycle) is to be rendered.
     (= (first vdom-element) :view)
     (let [attributes (second vdom-element)
-          definition (or (:definition attributes) (view-definitions/get! (:name attributes)))
+          definition (:definition attributes)
           input      (or (:input attributes) {})]
       (when-not definition
         (error (str "Unable to find view definition, " vdom-element)))
-      (js/React.createElement (definition->component definition)
+      (js/React.createElement (definition->component {:definition definition
+                                                      :input-definitions input-definitions
+                                                      :output-definitions output-definitions})
                               #js{:input input}))
 
     ;; A "normal" HTML DOM element.
@@ -167,15 +193,21 @@
                                                        (or (string? (first children))
                                                            (number? (first children))))
                                                 [(first children)]
-                                                (map (fn [child] (create-react-element child {:on-dom-event on-dom-event})) children))))]
+                                                (map (fn [child] (create-react-element child system-options)) children))))]
       (apply js/React.createElement react-element-args))
 
     :default
     (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
 
-(defn render! [view target]
+(defn render!
+  [{view :view
+    target-element :target-element
+    input-definitions :input-definitions
+    output-definitions :output-definitions}]
   (ensure-global-react!)
   (if (nil? view)
-    (js/ReactDOM.unmountComponentAtNode target)
-    (let [react-element (create-react-element view {:on-dom-event (fn [_])})]
-      (js/ReactDOM.render react-element target))))
+    (js/ReactDOM.unmountComponentAtNode target-element)
+    (let [react-element (create-react-element view {:input-definitions input-definitions
+                                                    :output-definitions output-definitions
+                                                    :on-dom-event (fn [_])})]
+      (js/ReactDOM.render react-element target-element))))
