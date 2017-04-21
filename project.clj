@@ -3,6 +3,8 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :deploy-repositories [["releases" :clojars]
+                        ["snapshots" :clojars]]
 
   :min-lein-version "2.7.1"
 
@@ -12,7 +14,7 @@
                   :exclusions [org.clojure/tools.reader]]
                  [cljsjs/react "15.4.2-2"]
                  [cljsjs/react-dom "15.4.2-2"]
-                 [ysera "1.0.1"]
+                 [ysera "1.0.3"]
                  [camel-snake-kebab "0.4.0"]] ;; For converting snake-case to camel-case, etc.
 
   :plugins [[lein-figwheel "0.5.9"]
