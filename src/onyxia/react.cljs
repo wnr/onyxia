@@ -19,11 +19,10 @@
 
 (defn- react-instance->parent-element
   [react-instance]
-  (or (js/ReactDOM.findDOMNode react-instance)
-      (let [internal-instance (aget react-instance "_reactInternalInstance")
-            host-parent (aget internal-instance "_hostParent")]
-        (or (and host-parent (js/ReactDOM.findDOMNode (aget host-parent "_hostNode")))
-            (aget internal-instance "_hostContainerInfo" "_node")))))
+  (let [internal-instance (aget react-instance "_reactInternalInstance")
+        host-parent (aget internal-instance "_hostParent")]
+    (or (and host-parent (js/ReactDOM.findDOMNode (aget host-parent "_hostNode")))
+        (aget internal-instance "_hostContainerInfo" "_node"))))
 
 (defn- get-view-input
   [component]
@@ -177,7 +176,13 @@
           definition (:definition attributes)
           input      (or (:input attributes) {})]
       (when-not definition
-        (error (str "Unable to find view definition, " vdom-element)))
+        (cond
+          (contains? attributes :definition)
+          (error (str "Unable to find view definition. " vdom-element))
+
+          :else
+          (error (str "The view must contain a :definition key. Did you spell it wrong? " vdom-element)))
+        )
       (js/React.createElement (definition->component {:definition definition
                                                       :input-definitions input-definitions
                                                       :output-definitions output-definitions})
