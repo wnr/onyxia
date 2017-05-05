@@ -146,18 +146,18 @@
 (defn
   ^{:test (fn []
             ;; Keep unknown attributes unchanged.
-            (is= (map-to-react-attributes :div {:unknown "test"} {})
+            (is= (map-to-react-attributes {:unknown "test"} {})
                  {:unknown "test"})
             ;; :class -> :className
-            (is= (map-to-react-attributes :div {:class "foo bar"} {})
+            (is= (map-to-react-attributes {:class "foo bar"} {})
                  {:className "foo bar"})
             ;; :style -> :style (with values changed to react-flavor).
-            (is= (map-to-react-attributes :div {:style {"padding-left" ""}} {})
+            (is= (map-to-react-attributes {:style {"padding-left" ""}} {})
                  {:style {"paddingLeft" ""}})
             ;; Map special SVG attributes
-            (is= (map-to-react-attributes :div {:text-anchor "foo" :xlink:href "bar"} {})
+            (is= (map-to-react-attributes {:text-anchor "foo" :xlink:href "bar"} {})
                  {"textAnchor" "foo" "xlinkHref" "bar"}))}
-  map-to-react-attributes [element attrs {on-dom-event :on-dom-event}]
+  map-to-react-attributes [attrs {on-dom-event :on-dom-event}]
   (-> attrs
       (replace-key :class :className)
       (replace-value :style style->react-style)
@@ -165,3 +165,17 @@
                                                                  :dom-event :event
                                                                  :data (:on-click attrs)})))
       (map-svg-attributes)))
+
+(defn add-key-attribute
+  {:test (fn []
+           ;; Should add key if present in system options, and not in element attrs.
+           (is= (add-key-attribute [:div {}] "key-value")
+                [:div {:key "key-value"}])
+           ;; Should not override existing key attribute.
+           (is= (map-to-react-attributes {:key "b"} {:key "a"})
+                {:key "b"}))}
+  [vdom-element key-value]
+  (update vdom-element 1 (fn [attrs]
+                           (if (contains? attrs :key)
+                             attrs
+                             (assoc attrs :key key-value)))))

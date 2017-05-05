@@ -64,7 +64,6 @@
   (let [state        @system-atom
         wanted-view  (get-wanted-modal-view state)
         current-view (get-current-modal-view state)]
-    (js/console.log state)
     (when (not= wanted-view current-view)
       (if wanted-view
         (render! (modal-component wanted-view))

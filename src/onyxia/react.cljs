@@ -1,9 +1,9 @@
 (ns onyxia.react
   (:require [cljsjs.react.dom]
-            [onyxia.react-utils :refer [map-to-react-attributes]]
+            [onyxia.react-utils :refer [map-to-react-attributes
+                                        add-key-attribute ]]
             [onyxia.vdom :as vdom]
             [ysera.error :refer [error]]
-            [onyxia.view-definitions :as view-definitions]
             [onyxia.dom-operator :refer [add-pending-operation!]]))
 
 (def component-cache (atom {}))
@@ -156,6 +156,7 @@
   [vdom-element {on-dom-event :on-dom-event
                  input-definitions :input-definitions
                  output-definitions :output-definitions
+                 key :key
                  :as system-options}]
   (ensure-global-react!)
   (cond
@@ -170,7 +171,7 @@
     (number? vdom-element)
     (str vdom-element)
 
-    ;; A view (collection of html element with a lifecycle) is to be rendered.
+    ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
     (= (first vdom-element) :view)
     (let [attributes (second vdom-element)
           definition (:definition attributes)
@@ -181,8 +182,7 @@
           (error (str "Unable to find view definition. " vdom-element))
 
           :else
-          (error (str "The view must contain a :definition key. Did you spell it wrong? " vdom-element)))
-        )
+          (error (str "The view must contain a :definition key. Did you spell it wrong? " vdom-element))))
       (js/React.createElement (definition->component {:definition definition
                                                       :input-definitions input-definitions
                                                       :output-definitions output-definitions})
@@ -193,13 +193,26 @@
     (let [vdom-element       (vdom/formalize-element vdom-element)
           children           (nth vdom-element 2)
           react-element-args (concat [(name (first vdom-element))
-                                      (clj->js (map-to-react-attributes (first vdom-element) (second vdom-element) {:on-dom-event on-dom-event}))]
+                                      (clj->js (map-to-react-attributes (second vdom-element)
+                                                                        {:on-dom-event on-dom-event
+                                                                         :key key}))]
                                      (clj->js (if (and (= (count children) 1)
                                                        (or (string? (first children))
                                                            (number? (first children))))
                                                 [(first children)]
-                                                (map (fn [child] (create-react-element child system-options)) children))))]
+                                                (map (fn [child]
+                                                       (create-react-element child system-options))
+                                                     children))))]
       (apply js/React.createElement react-element-args))
+
+    ;; A sequence of elements (that will need to be handled as such for React with keys etc).
+    (vdom/element-sequence? vdom-element)
+    (map-indexed (fn [index node]
+                   (let [node (if (vdom/element? node)
+                                (add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
+                                node)]
+                     (create-react-element node system-options)))
+                 (vdom/flatten-element-sequence vdom-element))
 
     :default
     (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
