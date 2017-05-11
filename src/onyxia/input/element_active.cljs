@@ -14,8 +14,7 @@
                                                           (dissoc :element-active-id)
                                                           (assoc :on-mouse-down (fn []
                                                                                   (swap! state-atom assoc :active-id element-active-id)
-                                                                                  (on-state-changed)
-                                                                                  ))
+                                                                                  (on-state-changed)))
                                                           (assoc :on-mouse-up (fn []
                                                                                 (swap! state-atom assoc :active-id nil)
                                                                                 (on-state-changed)))

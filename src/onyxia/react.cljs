@@ -162,9 +162,7 @@
                                                                (let [view-state-atom (get-view-state-atom component)]
                                                                  (create-react-element ((:render definition)
                                                                                          (get-view-input component))
-                                                                                       {:on-dom-event        (fn [{handler :handler
-                                                                                                                   type :type}]
-                                                                                                               (println type)
+                                                                                       {:on-dom-event        (fn [{handler :handler}]
                                                                                                                (if (sequential? handler)
                                                                                                                  ;; A function identifier is to be invoked.
                                                                                                                  (let [event-handling-definition (or (when (map? (first handler))
@@ -208,9 +206,12 @@
                                                                      nil
                                                                      (:output definition))
                                                              (when (should-render? component definition)
-                                                               ;; TODO: We want the component to get a chance to rerender, but we do not want to force it really. Does forceUpdate
-                                                               ;; perhaps skip shouldComponentUpdate? In that case, we should do it in another way.
-                                                               (.forceUpdate component)))
+                                                               (when (not (.-pending-rerender component))
+                                                                 (add-pending-operation! {:operation :write-dom
+                                                                                          :execute!  (fn []
+                                                                                                       (.setState component {:view-input (get-view-input component)})
+                                                                                                       (set! (.-pending-rerender component) false))})
+                                                                 (set! (.-pending-rerender component) true))))
                                                            nil)})))
 
 (defn- definition->component

@@ -16,7 +16,7 @@
     (reset! pending-operations-atom {:status    :idle
                                      :read-dom  []
                                      :write-dom []})
-    (let [read-operations  (:read-dom pending-operations)
+    (let [read-operations (:read-dom pending-operations)
           write-operations (:write-dom pending-operations)]
       (execute-operations-seq! read-operations)
       (execute-operations-seq! write-operations))))

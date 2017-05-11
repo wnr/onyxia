@@ -86,11 +86,12 @@
                                        :style             (merge {:cursor              "pointer"
                                                                   :transition-property "background-color"
                                                                   :transition-duration "70ms"}
+                                                                 ;; It is problematic to mutate the element on mouse-down event, when listening to on-click as the elment gets "renewed" on the mouse down event, and therefore
+                                                                 ;; the down -> up cycle that makes up a click is not completed.
                                                                  (when (and (not= index 0) (= index hovered-id))
                                                                    {:background "#eee"})
-                                                                 ;(when (and (not= index 0) (= index active-id))
-                                                                 ;  {:background "#ddd"})
-                                                                 )
+                                                                 (when (and (not= index 0) (= index active-id))
+                                                                   {:background "#ddd"}))
                                        :on-click          on-click
                                        :element-hover-id  index
                                        :element-active-id index}
