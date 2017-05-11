@@ -27,29 +27,11 @@ nav > h1 {
     padding: 0.5rem;
 }
 
-.table {
-    width: 100%;
-    text-align: left;
-    border: 2px solid grey;
-    border-spacing: 0;
-}
-
-.table th {
-    padding: 0.5rem;
-    border-bottom: 1px solid black;
-}
-
-.table tr[role=button] {
-    cursor: pointer;
-    transition-property: background-color;
-    transition-duration: 70ms;
-}
-
-.table tr[role=button]:hover {
+.test:hover {
     background-color: #eee;
 }
 
-.table tr[role=button]:active {
+.test:active {
     background-color: #ddd;
 }
 

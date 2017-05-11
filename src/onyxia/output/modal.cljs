@@ -1,9 +1,9 @@
 (ns onyxia.output.modal)
 
-(defonce system-atom (atom {:modal-element nil
-                            :current-modal-view nil
-                            :wanted-modal-view nil
-                            :render nil}))
+(def system-atom (atom {:modal-element      nil
+                        :current-modal-view nil
+                        :wanted-modal-view  nil
+                        :render             nil}))
 
 (defn get-modal-element! []
   (:modal-element @system-atom))
@@ -30,7 +30,7 @@
   (assoc state :current-modal-view view))
 
 (defn render! [view]
-  ((:render @system-atom) {:view view
+  ((:render @system-atom) {:view           view
                            :target-element (:modal-element @system-atom)
                            ;; TODO: How to handle input/output definitions?
                            }))
@@ -61,8 +61,8 @@
     [:div body]]])
 
 (defn handle-current-modal-view! []
-  (let [state        @system-atom
-        wanted-view  (get-wanted-modal-view state)
+  (let [state @system-atom
+        wanted-view (get-wanted-modal-view state)
         current-view (get-current-modal-view state)]
     (when (not= wanted-view current-view)
       (if wanted-view
@@ -82,8 +82,8 @@
   (swap! system-atom set-current-modal-view nil))
 
 (defn get-definition [{render :render}]
-  (swap! system-atom assoc :render render) ;; TODO: Not nice.
-  {:name         "modal"
+  (swap! system-atom assoc :render render)                  ;; TODO: Not nice.
+  {:name    "modal"
    :handle! (fn [output state]
               (let [modal-view ((:get-modal output) state)]
                 (if modal-view

@@ -29,7 +29,7 @@
                          [:div (str "Reading more about card: " (reading-more-about-card? state))]
                          [:p
                           (map (fn [[key value]]
-                                 [:span (str (name key) ": " value)
+                                 [:span {:key key} (str (name key) ": " value)
                                   [:br]]) card)]
                          [:button {:on-click [:on-read-more-click {:card card}]} "Läs mer"]])
    :events            {:on-read-more-click (fn [view-state {card :card}]

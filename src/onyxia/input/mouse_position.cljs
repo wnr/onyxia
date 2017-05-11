@@ -1,12 +1,12 @@
 (ns onyxia.input.mouse-position
   (:require [ysera.error :refer [error]]))
 
-(defonce system-state-atom (atom {:mouse-listener nil
-                                  :view-on-state-changed-fns #{}
-                                  :x nil
-                                  :y nil
-                                  :previous-x nil
-                                  :previous-y nil}))
+(def system-state-atom (atom {:mouse-listener            nil
+                              :view-on-state-changed-fns #{}
+                              :x                         nil
+                              :y                         nil
+                              :previous-x                nil
+                              :previous-y                nil}))
 
 (defn on-mouse-move
   [e]
@@ -27,8 +27,8 @@
 
 (defn get-mouse-position-input-value
   [system-state]
-  {:x (:x system-state)
-   :y (:y system-state)
+  {:x          (:x system-state)
+   :y          (:y system-state)
    :previous-x (:previous-x system-state)
    :previous-y (:previous-y system-state)})
 
@@ -36,6 +36,6 @@
   {:name         "mouse-position"
    :get-instance (fn [{on-state-changed :on-state-changed}]
                    (swap! system-state-atom (fn [system-state] (update-in system-state [:view-on-state-changed-fns] conj on-state-changed)))
-                   {:ready?            (fn [] true)
-                    :get-value         (fn [] (get-mouse-position-input-value @system-state-atom))
-                    :will-unmount      (fn [_] (swap! system-state-atom dissoc :view-on-state-changed-fns on-state-changed))})})
+                   {:ready?       (fn [] true)
+                    :get-value    (fn [] (get-mouse-position-input-value @system-state-atom))
+                    :will-unmount (fn [_] (swap! system-state-atom dissoc :view-on-state-changed-fns on-state-changed))})})
