@@ -1,4 +1,5 @@
-(ns onyxia.input.element-hovered)
+(ns onyxia.input.element-hovered
+  (:require [onyxia.attributes :refer [add-event-handler]]))
 
 (defn get-definition
   []
@@ -9,12 +10,12 @@
                       :get-value                  (fn []
                                                     (:hover (deref state-atom)))
                       :element-attribute-modifier (fn [{attributes :attributes}]
-                                                    (when-let [id (:element-hover-id attributes)]
+                                                    (when-let [id (:element-hovered-value attributes)]
                                                       (-> attributes
-                                                          (dissoc :element-hover-id)
-                                                          (assoc :on-mouse-enter (fn []
-                                                                                   (swap! state-atom assoc :hover id)
-                                                                                   (on-state-changed)))
-                                                          (assoc :on-mouse-leave (fn []
-                                                                                   (swap! state-atom assoc :hover nil)
-                                                                                   (on-state-changed))))))}))})
+                                                          (dissoc :element-hovered-value)
+                                                          (add-event-handler :on-mouse-enter (fn []
+                                                                                               (swap! state-atom assoc :hover id)
+                                                                                               (on-state-changed)))
+                                                          (add-event-handler :on-mouse-leave (fn []
+                                                                                               (swap! state-atom assoc :hover nil)
+                                                                                               (on-state-changed))))))}))})

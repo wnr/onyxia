@@ -33,7 +33,7 @@
                  [[:div]])
             (is= (clean-element-sequence
                    [[]])
-                 []))}
+                 [nil]))}
   clean-element-sequence [seq]
   (->> (reduce (fn [result entry]
                  (if (not (sequential? entry))

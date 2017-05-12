@@ -1,4 +1,5 @@
-(ns onyxia.input.element-active)
+(ns onyxia.input.element-active
+  (:require [onyxia.attributes :refer [add-event-handler]]))
 
 (defn get-definition
   []
@@ -9,16 +10,16 @@
                       :get-value                  (fn []
                                                     (:active-id (deref state-atom)))
                       :element-attribute-modifier (fn [{attributes :attributes}]
-                                                    (when-let [element-active-id (:element-active-id attributes)]
+                                                    (when-let [element-active-id (:element-active-value attributes)]
                                                       (-> attributes
-                                                          (dissoc :element-active-id)
-                                                          (assoc :on-mouse-down (fn []
-                                                                                  (swap! state-atom assoc :active-id element-active-id)
-                                                                                  (on-state-changed)))
-                                                          (assoc :on-mouse-up (fn []
-                                                                                (swap! state-atom assoc :active-id nil)
-                                                                                (on-state-changed)))
-                                                          (assoc :on-mouse-leave (fn []
-                                                                                   (when (:element-active-id (deref state-atom))
-                                                                                     (swap! state-atom assoc :active-id nil)
-                                                                                     (on-state-changed)))))))}))})
+                                                          (dissoc :element-active-value)
+                                                          (add-event-handler :on-mouse-down (fn []
+                                                                                              (swap! state-atom assoc :active-id element-active-id)
+                                                                                              (on-state-changed)))
+                                                          (add-event-handler :on-mouse-up (fn []
+                                                                                            (swap! state-atom assoc :active-id nil)
+                                                                                            (on-state-changed)))
+                                                          (add-event-handler :on-mouse-leave (fn []
+                                                                                               (when (:element-active-value (deref state-atom))
+                                                                                                 (swap! state-atom assoc :active-id nil)
+                                                                                                 (on-state-changed)))))))}))})

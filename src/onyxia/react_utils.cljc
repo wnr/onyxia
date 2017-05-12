@@ -133,6 +133,37 @@
     (update map key value)
     map))
 
+(defn- change-attribute
+  {:test (fn []
+           (is= (change-attribute {:foo :bar} {:key :baz :new-key :xar}) {:foo :bar})
+           (is= (change-attribute {:foo :bar} {:key :foo :new-key :baz}) {:baz :bar})
+           (is= (change-attribute {:foo :bar} {:key :foo :assoc "hello"}) {:foo "hello"})
+           (is= (change-attribute {:foo 1} {:key :foo :update inc}) {:foo 2})
+           (is= (change-attribute {:foo :bar} {:key :foo :new-key :bar :assoc "hello"}) {:bar "hello"})
+           (is= (change-attribute {:foo 1} {:key :foo :new-key :bar :update inc}) {:bar 2})
+           (is= (change-attribute {:foo 1 :bar 2} {:key :foo :new-key :bar :update inc :merge-fn +}) {:bar 4}))}
+  [attributes {key         :key
+               new-key     :new-key
+               assoc-value :assoc
+               update-fn   :update
+               merge-fn    :merge-fn}]
+  {:pre [(or (nil? assoc-value) (nil? update-fn))]}
+  (if-not (contains? attributes key)
+    attributes
+    (as-> attributes $
+          (if assoc-value
+            (assoc $ key assoc-value)
+            $)
+          (if update-fn
+            (update $ key update-fn)
+            $)
+          (if new-key
+            (-> (dissoc $ key)
+                (assoc new-key (if (and merge-fn (contains? $ new-key))
+                                 (merge-fn (get attributes new-key) (get $ key))
+                                 (get $ key))))
+            $))))
+
 (defn map-svg-attributes
   [attrs]
   (reduce (fn [attrs key]
@@ -142,6 +173,26 @@
                 attrs)))
           attrs
           (keys attrs)))
+
+(defn formalize-event-handlers
+  {:test (fn []
+           (is= (formalize-event-handlers nil) [])
+           (is= (formalize-event-handlers []) [])
+           (is= (formalize-event-handlers [:foo]) [[:foo]])
+           (is= (formalize-event-handlers [{} :foo]) [[{} :foo]])
+           (is= (formalize-event-handlers +) [+])
+           (is= (formalize-event-handlers [[:foo]]) [[:foo]])
+           (is= (formalize-event-handlers [[{} :foo]]) [[{} :foo]])
+           (is= (formalize-event-handlers [+]) [+]))}
+  [handlers]
+  (if (or (and (coll? handlers)
+               (not (empty? handlers))
+               (or (map? (first handlers))
+                   (keyword? (first handlers))))
+          (and (not (coll? handlers))
+               (not (nil? handlers))))
+    [handlers]
+    (or handlers [])))
 
 (defn
   ^{:test (fn []
@@ -162,16 +213,17 @@
                                type           :type}]
                            (on-dom-event {:type      type
                                           :dom-event :event
-                                          :handler   (get attrs attributes-key)}))]
+                                          :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
     (-> attrs
-        (replace-key :class :className)
-        (replace-key :on-click :onClick (fn [_] (println "on-click") (handle-dom-event {:attributes-key :on-click :type :on-click})))
-        (replace-key :on-mouse-enter :onMouseEnter (fn [_] (handle-dom-event {:attributes-key :on-mouse-enter :type :on-mouse-enter})))
-        (replace-key :on-mouse-leave :onMouseLeave (fn [_] (handle-dom-event {:attributes-key :on-mouse-leave :type :on-mouse-leave})))
-        (replace-key :on-mouse-up :onMouseUp (fn [_] (handle-dom-event {:attributes-key :on-mouse-up :type :on-mouse-up})))
-        (replace-key :on-mouse-down :onMouseDown (fn [_] (handle-dom-event {:attributes-key :on-mouse-down :type :on-mouse-down})))
-        (replace-value :style style->react-style)
+        (change-attribute {:key :class :new-key :className})
+        (change-attribute {:key :on-click :new-key :onClick :assoc (fn [_] (handle-dom-event {:attributes-key :on-click :type :on-click}))})
+        (change-attribute {:key :on-mouse-enter :new-key :onMouseEnter :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-enter :type :on-mouse-enter}))})
+        (change-attribute {:key :on-mouse-leave :new-key :onMouseLeave :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-leave :type :on-mouse-leave}))})
+        (change-attribute {:key :on-mouse-up :new-key :onMouseUp :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-up :type :on-mouse-up}))})
+        (change-attribute {:key :on-mouse-down :new-key :onMouseDown :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-down :type :on-mouse-down}))})
+        (change-attribute {:key :style :update style->react-style})
         (map-svg-attributes))))
+
 
 (defn add-key-attribute
   {:test (fn []

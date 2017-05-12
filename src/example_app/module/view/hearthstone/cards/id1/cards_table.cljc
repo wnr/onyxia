@@ -102,6 +102,74 @@
                                 [:tr columns]))
                             tbody)]])})
 
+(def button-test
+  {:name              "button"
+   :get-initial-state (fn []
+                        {:hovered false
+                         :active  false})
+   :events            {:on-mouse-enter (fn [view-state _]
+                                         (-> view-state
+                                             (assoc :hovered true)
+                                             (assoc :active false)))
+                       :on-mouse-down  (fn [view-state _]
+                                         (-> view-state
+                                             (assoc :hovered true)
+                                             (assoc :active true)))
+                       :on-mouse-leave (fn [view-state _]
+                                         (-> view-state
+                                             (assoc :hovered false)
+                                             (assoc :active false)))
+                       :on-mouse-up    (fn [view-state _]
+                                         (-> view-state
+                                             (assoc :hovered true)
+                                             (assoc :active false)))
+                       :on-click       (fn [view-state _]
+                                         (println "click"))}
+   :render            (fn [{{hovered :hovered active :active} :view-state}]
+                        [:div {:style          (merge {:display    "inline-block"
+                                                       :background "rebeccapurple"
+                                                       :color      "#fff"
+                                                       :border     "none"
+                                                       :padding    "1rem 2rem 1rem 2rem"
+                                                       :fontWeight "bold"
+                                                       :fontSize   "1rem"
+                                                       :cursor     "pointer"
+                                                       :outline    "none"}
+                                                      (when hovered
+                                                        {:filter "brightness(120%)"})
+                                                      (when active
+                                                        {:filter "brightness(85%)"}))
+                               :on-mouse-down  [:on-mouse-down nil]
+                               :on-mouse-enter [:on-mouse-enter nil]
+                               :on-mouse-up    [:on-mouse-up nil]
+                               :on-mouse-leave [:on-mouse-leave nil]
+                               :on-click       [:on-click nil]}
+                         "click me"])})
+
+(def button-test-2
+  {:name   "button"
+   :input  {:hovered {:name "element-hovered"}
+            :active  {:name "element-active"}}
+   :events {:on-click (fn [_ _] (println "click"))}
+   :render (fn [{hovered :hovered
+                 active  :active}]
+             [:div {:style                 (merge {:display    "inline-block"
+                                                   :background "rebeccapurple"
+                                                   :color      "#fff"
+                                                   :padding    "1rem 2rem 1rem 2rem"
+                                                   :fontWeight "bold"
+                                                   :fontSize   "1rem"
+                                                   :cursor     "pointer"
+                                                   :outline    "none"}
+                                                  (when hovered
+                                                    {:filter "brightness(120%)"})
+                                                  (when active
+                                                    {:filter "brightness(85%)"}))
+                    :element-hovered-value true
+                    :element-active-value  true
+                    :on-click              [:on-click]}
+              "click me"])})
+
 (def view-definition
   {:name              "view.hearthstone.cards.id1/cards-table"
    :input             {:size {:name      "parent-size"
@@ -113,18 +181,23 @@
                             view-state :view-state}]
                         [:div
                          [:h1 (str size)]
-                         [:view {:definition table
-                                 :input      {:thead [[:th {:style th-style} "Name"]
-                                                      [:th {:style th-style} "Race"]
-                                                      [:th {:style th-style} "Set"]]
-                                              :tbody (map (fn [card]
-                                                            {:on-click           [view-definition :on-row-click {:card-id (:id card)}]
-                                                             :expandable         true
-                                                             :expanded           (card-detail-expanded? view-state (:id card))
-                                                             :columns            [[:td (:name card)]
-                                                                                  [:td (:race card)]
-                                                                                  [:td (:set card)]]
-                                                             :expandable-content [:td {:colSpan 3}
-                                                                                  [:view {:definition card-details/view-definition
-                                                                                          :input      {:card card}}]]})
-                                                          (:cards mocks/get-cards))}}]])})
+                         [:view {:definition button-test}]
+                         [:br]
+                         [:br]
+                         [:view {:definition button-test-2}]
+                         ;[:view {:definition table
+                         ;        :input      {:thead [[:th {:style th-style} "Name"]
+                         ;                             [:th {:style th-style} "Race"]
+                         ;                             [:th {:style th-style} "Set"]]
+                         ;                     :tbody (map (fn [card]
+                         ;                                   {:on-click           [view-definition :on-row-click {:card-id (:id card)}]
+                         ;                                    :expandable         true
+                         ;                                    :expanded           (card-detail-expanded? view-state (:id card))
+                         ;                                    :columns            [[:td (:name card)]
+                         ;                                                         [:td (:race card)]
+                         ;                                                         [:td (:set card)]]
+                         ;                                    :expandable-content [:td {:colSpan 3}
+                         ;                                                         [:view {:definition card-details/view-definition
+                         ;                                                                 :input      {:card card}}]]})
+                         ;                                 (:cards mocks/get-cards))}}]
+                         ])})

@@ -162,26 +162,31 @@
                                                                (let [view-state-atom (get-view-state-atom component)]
                                                                  (create-react-element ((:render definition)
                                                                                          (get-view-input component))
-                                                                                       {:on-dom-event        (fn [{handler :handler}]
-                                                                                                               (if (sequential? handler)
-                                                                                                                 ;; A function identifier is to be invoked.
-                                                                                                                 (let [event-handling-definition (or (when (map? (first handler))
-                                                                                                                                                       (first handler))
-                                                                                                                                                     definition)
-                                                                                                                       handle-fn-key (if (map? (first handler))
-                                                                                                                                       (second handler)
-                                                                                                                                       (first handler))
-                                                                                                                       handle-fn (get (:events event-handling-definition) handle-fn-key)
-                                                                                                                       handle-fn-data (last handler)]
-                                                                                                                   (if (not handle-fn)
-                                                                                                                     (throw (js/Error (str "Cannot find " handle-fn-key " function in definition " (:name event-handling-definition))))
-                                                                                                                     (let [handling-view-state-atom (if (not= event-handling-definition definition)
-                                                                                                                                                      (get-ancestor-view-instance-atom {:ancestor-definition event-handling-definition
-                                                                                                                                                                                        :ancestor-views-data ancestor-views-data})
-                                                                                                                                                      view-state-atom)]
-                                                                                                                       (swap! handling-view-state-atom handle-fn handle-fn-data))))
-                                                                                                                 ;; A raw function has been passed as handler, simply invoke it.
-                                                                                                                 (handler)))
+                                                                                       {:on-dom-event        (fn [{handlers :handlers}]
+                                                                                                               (doseq [handler handlers]
+                                                                                                                 (if (sequential? handler)
+                                                                                                                   ;; A function identifier is to be invoked.
+                                                                                                                   (let [event-handling-definition (or (when (map? (first handler))
+                                                                                                                                                         (first handler))
+                                                                                                                                                       definition)
+                                                                                                                         handle-fn-key (if (map? (first handler))
+                                                                                                                                         (second handler)
+                                                                                                                                         (first handler))
+                                                                                                                         handle-fn (get (:events event-handling-definition) handle-fn-key)
+                                                                                                                         handle-fn-data (last handler)]
+                                                                                                                     (if (not handle-fn)
+                                                                                                                       (throw (js/Error (str "Cannot find " handle-fn-key " function in definition " (:name event-handling-definition))))
+                                                                                                                       (let [handling-view-state-atom (if (not= event-handling-definition definition)
+                                                                                                                                                        (get-ancestor-view-instance-atom {:ancestor-definition event-handling-definition
+                                                                                                                                                                                          :ancestor-views-data ancestor-views-data})
+                                                                                                                                                        view-state-atom)]
+                                                                                                                         ;; TODO: Could avoid multiple swaps by merging all handler functions into a single composite transform.
+                                                                                                                         (swap! handling-view-state-atom (fn [state]
+                                                                                                                                                           (if-let [result (handle-fn state handle-fn-data)]
+                                                                                                                                                             result
+                                                                                                                                                             state))))))
+                                                                                                                   ;; A raw function has been passed as handler, simply invoke it.
+                                                                                                                   (handler))))
                                                                                         :input-definitions   input-definitions
                                                                                         :output-definitions  output-definitions
                                                                                         :ancestor-views-data (assoc ancestor-views-data definition {:view-state-atom view-state-atom})
@@ -206,12 +211,7 @@
                                                                      nil
                                                                      (:output definition))
                                                              (when (should-render? component definition)
-                                                               (when (not (.-pending-rerender component))
-                                                                 (add-pending-operation! {:operation :write-dom
-                                                                                          :execute!  (fn []
-                                                                                                       (.setState component {:view-input (get-view-input component)})
-                                                                                                       (set! (.-pending-rerender component) false))})
-                                                                 (set! (.-pending-rerender component) true))))
+                                                               (.setState component {:view-input (get-view-input component)})))
                                                            nil)})))
 
 (defn- definition->component
