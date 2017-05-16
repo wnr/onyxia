@@ -6,6 +6,7 @@
             [onyxia.input.element-active]
             [onyxia.input.mouse-position]
             [onyxia.output.modal]
+            [onyxia.output.at-body-root-view]
             [example-app.app :refer [app-view-definition]]))
 
 (enable-console-print!)
@@ -20,7 +21,8 @@
                           "element-hovered" (onyxia.input.element-hovered/get-definition
                                               {:mouse-position-input-definition (onyxia.input.mouse-position/get-definition)})
                           "element-active"  (onyxia.input.element-active/get-definition)}
-     :output-definitions {"modal" (onyxia.output.modal/get-definition)}}))
+     :output-definitions {"modal" (onyxia.output.modal/get-definition
+                                    {:at-body-root-view-output-definition (onyxia.output.at-body-root-view/get-definition)})}}))
 
 (defn on-js-reload
   []
