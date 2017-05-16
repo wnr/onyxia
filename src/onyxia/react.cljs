@@ -6,6 +6,9 @@
             [ysera.error :refer [error]]
             [onyxia.dom-operator :refer [add-pending-operation!]]))
 
+(declare create-react-element)
+(declare render!)
+
 (def component-cache (atom {}))
 
 (defn- ensure-global-react!
@@ -14,8 +17,6 @@
     (error "No global React instance found."))
   (when (not js/ReactDOM)
     (error "No global ReactDOM instance found.")))
-
-(declare create-react-element)
 
 (defn- react-instance->parent-element
   [react-instance]
@@ -42,6 +43,8 @@
   [{ancestor-definition :ancestor-definition
     ancestor-views-data :ancestor-views-data}]
   (let [view-data (get ancestor-views-data ancestor-definition)]
+    (when (not view-data)
+      (error "Unable to find ancestor view data for ancestor definition" (:name ancestor-definition)))
     (:view-state-atom view-data)))
 
 (defn init-input-systems!
@@ -205,13 +208,20 @@
                                                            nil)
                                   :onStateChanged        (fn []
                                                            (this-as component
-                                                             (reduce (fn [_ output]
-                                                                       (let [output-definition (get-output-definition output-definitions (:name output))]
-                                                                         ((:handle! output-definition) output (get-view-input component))))
-                                                                     nil
-                                                                     (:output definition))
-                                                             (when (should-render? component definition)
-                                                               (.setState component {:view-input (get-view-input component)})))
+                                                             (let [view-state-atom (get-view-state-atom component)]
+                                                               (reduce (fn [_ output]
+                                                                         (let [output-definition (get-output-definition output-definitions (:name output))]
+                                                                           ((:handle! output-definition)
+                                                                             {:view-output         output
+                                                                              :view-state          (get-view-input component)
+                                                                              :render!             render!
+                                                                              :input-definitions   input-definitions
+                                                                              :output-definitions  output-definitions
+                                                                              :ancestor-views-data (assoc ancestor-views-data definition {:view-state-atom view-state-atom})})))
+                                                                       nil
+                                                                       (:output definition))
+                                                               (when (should-render? component definition)
+                                                                 (.setState component {:view-input (get-view-input component)}))))
                                                            nil)})))
 
 (defn- definition->component
@@ -261,7 +271,11 @@
     (= (first vdom-element) :view)
     (let [attributes (second vdom-element)
           definition (:definition attributes)
-          input (or (:input attributes) {})]
+          children (nthrest vdom-element 2)
+          input (merge (or (:input attributes) {})
+                       (when children
+                         ;; TODO: What about conflicts with existing input called "children"?
+                         {:children children}))]
       (when-not definition
         (cond
           (contains? attributes :definition)
@@ -307,14 +321,17 @@
     (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
 
 (defn render!
-  [{view               :view
-    target-element     :target-element
-    input-definitions  :input-definitions
-    output-definitions :output-definitions}]
+  [{view                :view
+    target-element      :target-element
+    input-definitions   :input-definitions
+    output-definitions  :output-definitions
+    ;; Optional. May be used to define conceptual parents of the rendered view tree (even though it is not a parent HTML-wise).
+    ancestor-views-data :ancestor-views-data}]
   (ensure-global-react!)
   (if (nil? view)
     (js/ReactDOM.unmountComponentAtNode target-element)
-    (let [react-element (create-react-element view {:input-definitions  input-definitions
-                                                    :output-definitions output-definitions
-                                                    :on-dom-event       (fn [_])})]
+    (let [react-element (create-react-element view {:input-definitions   input-definitions
+                                                    :output-definitions  output-definitions
+                                                    :on-dom-event        (fn [_])
+                                                    :ancestor-views-data ancestor-views-data})]
       (js/ReactDOM.render react-element target-element))))

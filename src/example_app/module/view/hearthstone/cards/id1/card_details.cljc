@@ -1,6 +1,7 @@
 (ns example-app.module.view.hearthstone.cards.id1.card-details
   (:require
-   [ysera.test :refer [is= is]]))
+    [ysera.test :refer [is= is]]
+    [example-app.module.view.hearthstone.cards.id1.button :refer [button-view]]))
 
 (defn create-state []
   {:read-more false})
@@ -11,6 +12,9 @@
 (defn toggle-read-more-about-card [state card]
   (assoc state :read-more (not (reading-more-about-card? state))))
 
+(defn stop-reading-more-about-card [state]
+  (assoc state :read-more false))
+
 (def view-definition
   {:name              "view.hearthstone.cards.id1/card-details"
    :input             {:size {:name      "parent-size"
@@ -20,8 +24,12 @@
                         :get-modal (fn [{state :view-state
                                          card  :card}]
                                      (when (reading-more-about-card? state)
-                                       {:title (str "Om " (:category card))
-                                        :body  [:p "Bla bla bla..."]}))}]
+                                       {:title (str "About " (:category card))
+                                        :body  [:div
+                                                [:p "Bla bla bla..."]
+                                                [:view {:definition button-view
+                                                        :input      {:on-click [view-definition :on-close-modal-click]}}
+                                                 "Close"]]}))}]
    :render            (fn [{state :view-state
                             size  :size
                             card  :card}]
@@ -32,5 +40,7 @@
                                  [:span {:key key} (str (name key) ": " value)
                                   [:br]]) card)]
                          [:button {:on-click [:on-read-more-click {:card card}]} "Läs mer"]])
-   :events            {:on-read-more-click (fn [view-state {card :card}]
-                                             (toggle-read-more-about-card view-state card))}})
+   :events            {:on-read-more-click   (fn [view-state {card :card}]
+                                               (toggle-read-more-about-card view-state card))
+                       :on-close-modal-click (fn [view-state _]
+                                               (stop-reading-more-about-card view-state))}})

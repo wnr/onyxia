@@ -4,6 +4,7 @@
             [onyxia.input.parent-size]
             [onyxia.input.element-hovered]
             [onyxia.input.element-active]
+            [onyxia.input.mouse-position]
             [onyxia.output.modal]
             [example-app.app :refer [app-view-definition]]))
 
@@ -16,9 +17,10 @@
     {:view               [:view {:definition app-view-definition}]
      :target-element     (js/document.getElementById "app")
      :input-definitions  {"parent-size"     (onyxia.input.parent-size/get-definition)
-                          "element-hovered" (onyxia.input.element-hovered/get-definition)
+                          "element-hovered" (onyxia.input.element-hovered/get-definition
+                                              {:mouse-position-input-definition (onyxia.input.mouse-position/get-definition)})
                           "element-active"  (onyxia.input.element-active/get-definition)}
-     :output-definitions {"modal" (onyxia.output.modal/get-definition {:render render!})}}))
+     :output-definitions {"modal" (onyxia.output.modal/get-definition)}}))
 
 (defn on-js-reload
   []
