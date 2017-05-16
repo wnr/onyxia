@@ -9,7 +9,7 @@
    {:name         "element-hovered"
     :get-instance (fn [{on-state-changed        :on-state-changed
                         still-to-initiate-hover :still-to-initiate-hover
-                        still-to-remain-hovered   :still-to-remain-hovered}]
+                        still-to-remain-hovered :still-to-remain-hovered}]
                     (when (and still-to-initiate-hover (not mouse-position-input-definition))
                       (error ":mouse-position-input-definition is required when :still is true."))
                     (when (and (not still-to-initiate-hover) still-to-remain-hovered)
@@ -23,11 +23,11 @@
                                                     ((:get-instance mouse-position-input-definition)
                                                       {:on-state-changed (fn []
                                                                            (let [state (deref state-atom)]
+                                                                             (when-let [still-timeout-id (:still-timeout-id state)]
+                                                                               (js/clearTimeout still-timeout-id))
                                                                              (when (and (:hover-value state)
                                                                                         (or still-to-remain-hovered
                                                                                             (not (:still state))))
-                                                                               (when-let [still-timeout-id (:still-timeout-id state)]
-                                                                                 (js/clearTimeout still-timeout-id))
                                                                                (swap! state-atom assoc :still false :still-timeout-id (js/setTimeout on-still-timeout 100)))))}))]
                       (add-watch state-atom :state-change-notifier (fn [_ _ old-state new-state]
                                                                      (let [hover-changed (not= (:hover-value old-state) (:hover-value new-state))]
@@ -50,9 +50,9 @@
                                                        (-> attributes
                                                            (dissoc :element-hovered-value)
                                                            (add-event-handler :on-mouse-enter (fn []
-                                                                                                (swap! state-atom assoc :hover-value hover-value)))
+                                                                                                (swap! state-atom assoc :hover-value hover-value :still false)))
                                                            (add-event-handler :on-mouse-leave (fn []
-                                                                                                (swap! state-atom assoc :hover-value nil))))))
+                                                                                                (swap! state-atom assoc :hover-value nil :still false))))))
                        :will-unmount               (fn [args]
                                                      (when mouse-position-instance
                                                        ((:will-unmount mouse-position-instance) args)))}))}))

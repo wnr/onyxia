@@ -11,6 +11,7 @@
 (defn create-container-element!
   []
   (let [container-element (.createElement js/document "div")]
+    (.setAttribute container-element "data-entity" "at-body-root-view-container")
     (.appendChild (.-body js/document) container-element)
     (swap! system-atom assoc :container-element container-element)))
 

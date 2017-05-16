@@ -209,18 +209,18 @@
                                   :onStateChanged        (fn []
                                                            (this-as component
                                                              (let [view-state-atom (get-view-state-atom component)]
-                                                               (reduce (fn [_ output]
-                                                                         (let [output-definition (get-output-definition output-definitions (:name output))]
-                                                                           ((:handle! output-definition)
-                                                                             {:view-output         output
-                                                                              :view-state          (get-view-input component)
-                                                                              :render!             render!
-                                                                              :input-definitions   input-definitions
-                                                                              :output-definitions  output-definitions
-                                                                              :ancestor-views-data (assoc ancestor-views-data definition {:view-state-atom view-state-atom})})))
-                                                                       nil
-                                                                       (:output definition))
                                                                (when (should-render? component definition)
+                                                                 (reduce (fn [_ output]
+                                                                           (let [output-definition (get-output-definition output-definitions (:name output))]
+                                                                             ((:handle! output-definition)
+                                                                               {:view-output         output
+                                                                                :view-state          (get-view-input component)
+                                                                                :render!             render!
+                                                                                :input-definitions   input-definitions
+                                                                                :output-definitions  output-definitions
+                                                                                :ancestor-views-data (assoc ancestor-views-data definition {:view-state-atom view-state-atom})})))
+                                                                         nil
+                                                                         (:output definition))
                                                                  (.setState component {:view-input (get-view-input component)}))))
                                                            nil)})))
 
