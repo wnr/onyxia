@@ -33,7 +33,7 @@
                  [[:div]])
             (is= (clean-element-sequence
                    [[]])
-                 [nil]))}
+                 []))}
   clean-element-sequence [seq]
   (->> (reduce (fn [result entry]
                  (if (not (sequential? entry))
@@ -123,3 +123,52 @@
   (and (not (element? node))
        (not (string? node))
        (sequential? node)))
+
+(defn view?
+  {:test (fn []
+           (is (view? {:name "view-definition"}))
+           (is (view? [{:name "view-definition"}]))
+           (is (view? [{:name "view-definition"} {:foo :bar} "child"]))
+           (is-not (view? [:div])))}
+  [vdom-element]
+  (or (map? (first vdom-element)) (map? vdom-element)))
+
+(defn get-view-definition
+  {:test (fn []
+           (is= (get-view-definition {:name "hello"})
+                {:name "hello"})
+           (is= (get-view-definition [{:name "hello"}])
+                {:name "hello"}))}
+  [view]
+  (if (map? view)
+    view
+    (first view)))
+
+(defn get-view-input
+  {:test (fn []
+           (is= (get-view-input {})
+                {})
+           (is= (get-view-input [{}])
+                {})
+           (is= (get-view-input [{} {}])
+                {})
+           (is= (get-view-input [{} {:foo :bar}])
+                {:foo :bar})
+           (is= (get-view-input [{} {:foo :bar} :a :b])
+                {:foo      :bar
+                 :children [:a :b]})
+           (is= (get-view-input [{} :a :b])
+                {:children [:a :b]}))}
+  [view]
+  (let [view-count (count view)
+        attributes (second view)]
+    (if (< view-count 3)
+      (or attributes {})
+      (let [has-attributes? (map? attributes)]
+        (merge (if has-attributes?
+                 attributes
+                 {})
+               (let [children (nthrest view (if has-attributes? 2 1))]
+                 (when children
+                   ;; TODO: What about conflicts with existing input called "children"?
+                   {:children children})))))))

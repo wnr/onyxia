@@ -268,21 +268,12 @@
     (str vdom-element)
 
     ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
-    (= (first vdom-element) :view)
-    (let [attributes (second vdom-element)
-          definition (:definition attributes)
-          children (nthrest vdom-element 2)
-          input (merge (or (:input attributes) {})
-                       (when children
-                         ;; TODO: What about conflicts with existing input called "children"?
-                         {:children children}))]
+    (vdom/view? vdom-element)
+    (let [view vdom-element
+          definition (vdom/get-view-definition view)
+          input (vdom/get-view-input view)]
       (when-not definition
-        (cond
-          (contains? attributes :definition)
-          (error (str "Unable to find view definition. " vdom-element))
-
-          :else
-          (error (str "The view must contain a :definition key. Did you spell it wrong? " vdom-element))))
+        (error (str "Unable to find view definition. " view)))
       (js/React.createElement (definition->component {:definition          definition
                                                       :input-definitions   input-definitions
                                                       :output-definitions  output-definitions

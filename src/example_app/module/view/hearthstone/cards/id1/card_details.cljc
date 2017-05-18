@@ -27,8 +27,7 @@
                                        {:title (str "About " (:category card))
                                         :body  [:div
                                                 [:p "Bla bla bla..."]
-                                                [:view {:definition button-view
-                                                        :input      {:on-click [view-definition :on-close-modal-click]}}
+                                                [button-view {:on-click [view-definition :on-close-modal-click]}
                                                  "Close"]]}))}]
    :render            (fn [{state :view-state
                             size  :size

@@ -15,7 +15,7 @@
 
 (defn render-app! []
   (render!
-    {:view               [:view {:definition app-view-definition}]
+    {:view               app-view-definition
      :target-element     (js/document.getElementById "app")
      :input-definitions  {"parent-size"     (onyxia.input.parent-size/get-definition)
                           "element-hovered" (onyxia.input.element-hovered/get-definition

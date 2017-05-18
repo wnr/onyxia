@@ -114,18 +114,17 @@
                             view-state :view-state}]
                         [:div
                          [:h1 (str size)]
-                         [:view {:definition table
-                                 :input      {:thead [[:th {:style th-style} "Name"]
-                                                      [:th {:style th-style} "Race"]
-                                                      [:th {:style th-style} "Set"]]
-                                              :tbody (map (fn [card]
-                                                            {:on-click           [view-definition :on-row-click {:card-id (:id card)}]
-                                                             :expandable         true
-                                                             :expanded           (card-detail-expanded? view-state (:id card))
-                                                             :columns            [[:td (:name card)]
-                                                                                  [:td (:race card)]
-                                                                                  [:td (:set card)]]
-                                                             :expandable-content [:td {:colSpan 3}
-                                                                                  [:view {:definition card-details/view-definition
-                                                                                          :input      {:card card}}]]})
-                                                          (:cards mocks/get-cards))}}]])})
+                         [table
+                          {:thead [[:th {:style th-style} "Name"]
+                                   [:th {:style th-style} "Race"]
+                                   [:th {:style th-style} "Set"]]
+                           :tbody (map (fn [card]
+                                         {:on-click           [view-definition :on-row-click {:card-id (:id card)}]
+                                          :expandable         true
+                                          :expanded           (card-detail-expanded? view-state (:id card))
+                                          :columns            [[:td (:name card)]
+                                                               [:td (:race card)]
+                                                               [:td (:set card)]]
+                                          :expandable-content [:td {:colSpan 3}
+                                                               [card-details/view-definition {:card card}]]})
+                                       (:cards mocks/get-cards))}]])})
