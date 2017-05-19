@@ -14,6 +14,7 @@
                   :exclusions [org.clojure/tools.reader]]
                  [cljsjs/react "15.4.2-2"]
                  [cljsjs/react-dom "15.4.2-2"]
+                 [cljsjs/inferno "3.0.5-0"]
                  [ysera "1.0.3"]
                  [camel-snake-kebab "0.4.0"]] ;; For converting snake-case to camel-case, etc.
 
