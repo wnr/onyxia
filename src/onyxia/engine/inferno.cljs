@@ -1,197 +1,179 @@
-;(ns onyxia.engine.inferno
-;  (:require [cljsjs.inferno]
-;            [cljsjs.inferno.create-element]
-;            [cljsjs.inferno.component]
-;            [cljsjs.inferno.create-class]
-;            [onyxia.engine.react-utils :refer [map-to-react-attributes
-;                                               add-key-attribute]]
-;            [onyxia.vdom :as vdom]
-;            [ysera.error :refer [error]]
-;            [onyxia.dom-operator :refer [add-pending-operation!]]))
-;
-;
-;(defn create-view-component
-;  [{definition          :definition
-;    input-definitions   :input-definitions
-;    output-definitions  :output-definitions
-;    ancestor-views-data :ancestor-views-data}]
-;  (js/Infero.createClass (clj->js {:displayName           (:name definition)
-;                                   :componentWillMount    (fn []
-;                                                            (this-as component
-;                                                              (init-view-state! {:component component :definition definition})
-;                                                              (init-input-systems! {:component component :definition definition :input-definitions input-definitions :on-state-changed (fn [] (.onStateChanged component))})
-;                                                              (add-watch (get-view-state-atom component) :renderer (fn [_ _ _ _] (.onStateChanged component))))
-;                                                            nil)
-;                                   :componentDidMount     (fn []
-;                                                            (this-as component
-;                                                              (did-mount! {:component component})
-;                                                              (did-render! {:component component :definition definition}))
-;                                                            nil)
-;                                   :render                (fn []
-;                                                            (this-as component
-;                                                              (when (all-input-system-instances-ready? {:component component})
-;                                                                (let [view-state-atom (get-view-state-atom component)]
-;                                                                  (create-react-element ((:render definition)
-;                                                                                          (get-view-input component))
-;                                                                                        {:on-dom-event        (fn [{handlers :handlers}]
-;                                                                                                                (doseq [handler handlers]
-;                                                                                                                  (if (sequential? handler)
-;                                                                                                                    ;; A function identifier is to be invoked.
-;                                                                                                                    (let [event-handling-definition (or (when (map? (first handler))
-;                                                                                                                                                          (first handler))
-;                                                                                                                                                        definition)
-;                                                                                                                          handle-fn-key (if (map? (first handler))
-;                                                                                                                                          (second handler)
-;                                                                                                                                          (first handler))
-;                                                                                                                          handle-fn (get (:events event-handling-definition) handle-fn-key)
-;                                                                                                                          handle-fn-data (last handler)]
-;                                                                                                                      (if (not handle-fn)
-;                                                                                                                        (throw (js/Error (str "Cannot find " handle-fn-key " function in definition " (:name event-handling-definition))))
-;                                                                                                                        (let [handling-view-state-atom (if (not= event-handling-definition definition)
-;                                                                                                                                                         (get-ancestor-view-instance-atom {:ancestor-definition event-handling-definition
-;                                                                                                                                                                                           :ancestor-views-data ancestor-views-data})
-;                                                                                                                                                         view-state-atom)]
-;                                                                                                                          ;; TODO: Could avoid multiple swaps by merging all handler functions into a single composite transform.
-;                                                                                                                          (swap! handling-view-state-atom (fn [state]
-;                                                                                                                                                            (if-let [result (handle-fn state handle-fn-data)]
-;                                                                                                                                                              result
-;                                                                                                                                                              state))))))
-;                                                                                                                    ;; A raw function has been passed as handler, simply invoke it.
-;                                                                                                                    (handler))))
-;                                                                                         :input-definitions   input-definitions
-;                                                                                         :output-definitions  output-definitions
-;                                                                                         :ancestor-views-data (assoc ancestor-views-data definition {:view-state-atom view-state-atom})
-;                                                                                         :component           component})))))
-;                                   :shouldComponentUpdate (fn []
-;                                                            (this-as component
-;                                                              (should-render? component definition)))
-;                                   :componentDidUpdate    (fn []
-;                                                            (this-as component
-;                                                              (did-render! {:component component :definition definition}))
-;                                                            nil)
-;                                   :componentWillUnmount  (fn []
-;                                                            (this-as component
-;                                                              (will-unmount! {:component component})
-;                                                              nil)
-;                                                            nil)
-;                                   :onStateChanged        (fn []
-;                                                            (this-as component
-;                                                              (let [view-state-atom (get-view-state-atom component)]
-;                                                                (when (should-render? component definition)
-;                                                                  (reduce (fn [_ output]
-;                                                                            (let [output-definition (get-output-definition output-definitions (:name output))]
-;                                                                              ((:handle! output-definition)
-;                                                                                {:view-output         output
-;                                                                                 :view-state          (get-view-input component)
-;                                                                                 :render!             render!
-;                                                                                 :input-definitions   input-definitions
-;                                                                                 :output-definitions  output-definitions
-;                                                                                 :ancestor-views-data (assoc ancestor-views-data definition {:view-state-atom view-state-atom})})))
-;                                                                          nil
-;                                                                          (:output definition))
-;                                                                  (.setState component {:view-input (get-view-input component)}))))
-;                                                            nil)})))
-;
-;(defn- definition->component
-;  [{definition :definition
-;    :as        arguments}]
-;  ;; Currently not caring about whether input-definitions have changed.
-;  (let [cached-component (get @component-cache definition)]
-;    (if cached-component
-;      cached-component
-;      (let [component (create-view-component arguments)]
-;        (swap! component-cache assoc definition component)
-;        component))))
-;
-;(defn modify-attributes
-;  [attributes {component :component}]
-;  (reduce (fn [attributes input-instance]
-;            (if-let [element-attribute-modifier (:element-attribute-modifier input-instance)]
-;              (do
-;                (if-let [modified-attributes (element-attribute-modifier {:attributes attributes})]
-;                  modified-attributes
-;                  attributes))
-;              attributes))
-;          attributes
-;          (get-input-system-instances {:component component})))
-;
-;(defn- create-inferno-element
-;  [vdom-element {on-dom-event        :on-dom-event
-;                 input-definitions   :input-definitions
-;                 output-definitions  :output-definitions
-;                 ancestor-views-data :ancestor-views-data   ;; Optional. Needed if function locators are to be sent from a view to another.
-;                 component           :component             ;; Optional. Needed to activate view-specific input systems. If not present, only standard HTML attributes and such will be processed.
-;                 :as                 system-options}]
-;  (ensure-global-inferno!)
-;  (cond
-;    ;; React.createElement cares about children ordering, so it is important to keep nil children.
-;    ;; Otherwise, React won't be able to recognize unaffected children (so it will re-mount all of them).
-;    ;; TODO: Does Inferno also care about this?
-;    (nil? vdom-element)
-;    nil
-;
-;    (string? vdom-element)
-;    vdom-element
-;
-;    (number? vdom-element)
-;    (str vdom-element)
-;
-;    ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
-;    (vdom/view? vdom-element)
-;    (let [view vdom-element
-;          definition (vdom/get-view-definition view)
-;          input (vdom/get-view-input view)]
-;      (when-not definition
-;        (error (str "Unable to find view definition. " view)))
-;      (js/Inferno.createElement (definition->component {:definition          definition
-;                                                        :input-definitions   input-definitions
-;                                                        :output-definitions  output-definitions
-;                                                        :ancestor-views-data ancestor-views-data})
-;                                #js{:input input}))
-;
-;    ;; A "normal" HTML DOM element.
-;    (keyword? (first vdom-element))
-;    (let [vdom-element (vdom/formalize-element vdom-element)
-;          attributes (second vdom-element)
-;          children (nth vdom-element 2)
-;          inferno-element-args (concat [(name (first vdom-element))
-;                                        (clj->js (-> (if component
-;                                                       (modify-attributes attributes {:component component})
-;                                                       attributes)
-;                                                     (map-to-inferno-attributes {:on-dom-event on-dom-event})))]
-;                                       (clj->js (if (and (= (count children) 1)
-;                                                         (or (string? (first children))
-;                                                             (number? (first children))))
-;                                                  [(first children)]
-;                                                  (map (fn [child]
-;                                                         (create-inferno-element child system-options))
-;                                                       children))))]
-;      (apply js/Inferno.createElement inferno-element-args))
-;
-;    ;; A sequence of elements (that will need to be handled as such for React with keys etc).
-;    (vdom/element-sequence? vdom-element)
-;    (map-indexed (fn [index node]
-;                   (let [node (if (vdom/element? node)
-;                                (add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
-;                                node)]
-;                     (create-inferno-element node system-options)))
-;                 (vdom/clean-element-sequence vdom-element))
-;
-;    :default
-;    (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
-;
-;(defn render!
-;  [{view                :view
-;    target-element      :target-element
-;    input-definitions   :input-definitions
-;    output-definitions  :output-definitions
-;    ;; Optional. May be used to define conceptual parents of the rendered view tree (even though it is not a parent HTML-wise).
-;    ancestor-views-data :ancestor-views-data}]
-;  (ensure-global-inferno!)
-;  (if (nil? view)
-;    (js/Infero.render nil target-element)
-;    (let [inferno-element (create-inferno-element view {:input-definitions   input-definitions
-;                                                        :output-definitions  output-definitions
-;                                                        :on-dom-event        (fn [_])
-;                                                        :ancestor-views-data ancestor-views-data})]
-;      (js/Inferno.render inferno-element target-element))))
+(ns onyxia.engine.inferno
+  (:require
+    [cljsjs.inferno]
+    [cljsjs.inferno.create-element]
+    [cljsjs.inferno.component]
+    [cljsjs.inferno.create-class]
+    ;; Borrowing some react utils for now.
+    [onyxia.engine.react-utils :refer [map-to-react-attributes
+                                       add-key-attribute]]
+    [onyxia.vdom :as vdom]
+    [ysera.error :refer [error]]
+    [onyxia.view-instance :as vi]
+    [onyxia.dom-operator :refer [add-pending-operation!]]))
+
+(def map-to-inferno-attributes map-to-react-attributes)
+
+(declare create-inferno-element)
+(declare render!)
+
+(def component-cache (atom {}))
+
+(defn- ensure-global-inferno!
+  []
+  (when (not js/Inferno)
+    (error "No global Inferno instance found."))
+  (when (not js/Inferno.createElement)
+    (error "Inferno.createElement needs to be present."))
+  (when (not js/Inferno.createClass)
+    (error "Inferno.createClass needs to be present.")))
+
+(defn- component->parent-element
+  [component]
+  (let []
+    (aget component "_vNode" "dom" "parentElement")))
+
+(defn create-view-component
+  [{definition          :definition
+    input-definitions   :input-definitions
+    output-definitions  :output-definitions
+    ancestor-views-data :ancestor-views-data
+    :as                 args}]
+  (js/Inferno.createClass (clj->js {:displayName               (:name definition)
+                                    :componentWillMount        (fn []
+                                                                 (this-as component
+                                                                   (let [view-instance (vi/create-view-instance (merge args {:render! render!}))]
+                                                                     (aset component "viewInstance" view-instance)
+                                                                     (vi/will-mount! view-instance {:parent-input     (aget component "props" "input")
+                                                                                                    :on-state-changed (fn [] (.onStateChanged component))})))
+                                                                 nil)
+                                    :componentDidMount         (fn []
+                                                                 (this-as component
+                                                                   (vi/did-mount! (aget component "viewInstance") {:parent-element (component->parent-element component)}))
+                                                                 nil)
+                                    :render                    (fn []
+                                                                 (this-as component
+                                                                   (let [view-instance (aget component "viewInstance")]
+                                                                     (when (vi/all-input-system-instances-ready? view-instance)
+                                                                       (create-inferno-element ((:render definition)
+                                                                                                 (vi/get-view-input view-instance))
+                                                                                               {:on-dom-event        (fn [{handlers :handlers}]
+                                                                                                                       (vi/handle-dom-event view-instance {:handlers handlers}))
+                                                                                                :input-definitions   input-definitions
+                                                                                                :output-definitions  output-definitions
+                                                                                                :ancestor-views-data (assoc ancestor-views-data definition {:view-state-atom (vi/get-view-state-atom view-instance)})
+                                                                                                :view-instance       view-instance})))))
+                                    :componentWillReceiveProps (fn [next-props]
+                                                                 (this-as component
+                                                                   (let [view-instance (aget component "viewInstance")]
+                                                                     (vi/set-parent-input! view-instance (aget next-props "input"))))
+                                                                 nil)
+                                    :shouldComponentUpdate     (fn []
+                                                                 (this-as component
+                                                                   (let [view-instance (aget component "viewInstance")]
+                                                                     (vi/should-render? view-instance))))
+                                    :componentDidUpdate        (fn []
+                                                                 (this-as component
+                                                                   (let [view-instance (aget component "viewInstance")]
+                                                                     (vi/did-render! view-instance)))
+                                                                 nil)
+                                    :componentWillUnmount      (fn []
+                                                                 (this-as component
+                                                                   (let [view-instance (aget component "viewInstance")]
+                                                                     (vi/will-unmount! view-instance)))
+                                                                 nil)
+                                    :onStateChanged            (fn []
+                                                                 (this-as component
+                                                                   (let [view-instance (aget component "viewInstance")]
+                                                                     (.setState component {:view-input (vi/get-view-input view-instance)})))
+                                                                 nil)})))
+
+(defn- get-component
+  [arguments]
+  (let [cached-component (get @component-cache arguments)]
+    (if cached-component
+      cached-component
+      (let [component (create-view-component arguments)]
+        (swap! component-cache assoc arguments component)
+        component))))
+
+(defn- create-inferno-element
+  [vdom-element {on-dom-event        :on-dom-event
+                 input-definitions   :input-definitions
+                 output-definitions  :output-definitions
+                 ancestor-views-data :ancestor-views-data   ;; Optional. Needed if function locators are to be sent from a view to another.
+                 view-instance       :view-instance         ;; Optional. Needed to activate view-specific input systems. If not present, only standard HTML attributes and such will be processed.
+                 :as                 system-options}]
+  (ensure-global-inferno!)
+  (cond
+    ;; React.createElement cares about children ordering, so it is important to keep nil children.
+    ;; Otherwise, React won't be able to recognize unaffected children (so it will re-mount all of them).
+    ;; TODO: Is this also true to Inferno?
+    (nil? vdom-element)
+    nil
+
+    (string? vdom-element)
+    vdom-element
+
+    (number? vdom-element)
+    (str vdom-element)
+
+    ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
+    (vdom/view? vdom-element)
+    (let [view vdom-element
+          definition (vdom/get-view-definition view)
+          input (vdom/get-view-input view)]
+      (when-not definition
+        (error (str "Unable to find view definition. " view)))
+      (js/Inferno.createElement (get-component {:definition          definition
+                                                :input-definitions   input-definitions
+                                                :output-definitions  output-definitions
+                                                :ancestor-views-data ancestor-views-data})
+                                #js{:input input}))
+
+    ;; A "normal" HTML DOM element.
+    (keyword? (first vdom-element))
+    (let [vdom-element (vdom/formalize-element vdom-element)
+          attributes (second vdom-element)
+          children (nth vdom-element 2)
+          inferno-element-args (concat [(name (first vdom-element))
+                                        (clj->js (-> (if view-instance
+                                                       (vi/modify-attributes attributes {:view-instance view-instance})
+                                                       attributes)
+                                                     (map-to-inferno-attributes {:on-dom-event on-dom-event})))]
+                                       (clj->js (if (and (= (count children) 1)
+                                                         (or (string? (first children))
+                                                             (number? (first children))))
+                                                  [(first children)]
+                                                  (map (fn [child]
+                                                         (create-inferno-element child system-options))
+                                                       children))))]
+      (apply js/Inferno.createElement inferno-element-args))
+
+    ;; A sequence of elements
+    (vdom/element-sequence? vdom-element)
+    (map-indexed (fn [index node]
+                   (let [node (if (vdom/element? node)
+                                (add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
+                                node)]
+                     (create-inferno-element node system-options)))
+                 (vdom/clean-element-sequence vdom-element))
+
+    :default
+    (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
+
+(defn render!
+  [{view                :view
+    target-element      :target-element
+    input-definitions   :input-definitions
+    output-definitions  :output-definitions
+    ;; Optional. May be used to define conceptual parents of the rendered view tree (even though it is not a parent HTML-wise).
+    ancestor-views-data :ancestor-views-data}]
+  (ensure-global-inferno!)
+  (if (nil? view)
+    (js/Inferno.render nil target-element)
+    (let [inferno-element (create-inferno-element view {:input-definitions   input-definitions
+                                                        :output-definitions  output-definitions
+                                                        :on-dom-event        (fn [_])
+                                                        :ancestor-views-data ancestor-views-data})]
+      (js/Inferno.render inferno-element target-element))))
