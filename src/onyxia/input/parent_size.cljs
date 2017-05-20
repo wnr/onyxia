@@ -60,10 +60,9 @@
   (let [scrollbar-size (:scrollbar-size @system-state-atom)
         scrollbar-width (:width scrollbar-size)
         scrollbar-height (:height scrollbar-size)
-        expand-child (get-expand-child-element! element)
-        shrink-child (get-shrink-child-element! element)]
-    (aset expand-child "style" "width" (str (get-desired-expand-child-width element-width scrollbar-width)))
-    (aset expand-child "style" "height" (str (get-desired-expand-child-height element-height scrollbar-height)))))
+        expand-child (get-expand-child-element! element)]
+    (aset expand-child "style" "width" (str (get-desired-expand-child-width element-width scrollbar-width) "px"))
+    (aset expand-child "style" "height" (str (get-desired-expand-child-height element-height scrollbar-height) "px"))))
 
 (defn position-scrollbars! [element element-width element-height]
   (let [scrollbar-size (:scrollbar-size @system-state-atom)
