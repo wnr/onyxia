@@ -1,20 +1,25 @@
 (ns onyxia.view-instance
   (:require [ysera.error :refer [error]]
-            [onyxia.dom-operator :refer [add-pending-operation!]]))
+            [onyxia.dom-operator :refer [add-pending-operation!]]
+            [onyxia.view-instance-utils :refer [formalize-input-definitions
+                                                formalize-output-definitions]]))
 
 (defn create-view-instance
   [{definition          :definition
     input-definitions   :input-definitions
     output-definitions  :output-definitions
     ancestor-views-data :ancestor-views-data
-    render!             :render!
-    :as                 args}]
-  (atom (merge args
-               {:input-instances-data nil
-                :parent-element       nil
-                :parent-input         nil
-                :mounted              false
-                :has-been-mounted     false})))
+    render!             :render!}]
+  (atom {:definition           definition
+         :input-definitions    (formalize-input-definitions input-definitions)
+         :output-definitions   (formalize-output-definitions output-definitions)
+         :ancestor-views-data  ancestor-views-data
+         :render!              render!
+         :input-instances-data nil
+         :parent-element       nil
+         :parent-input         nil
+         :mounted              false
+         :has-been-mounted     false}))
 
 (defn get-definition
   [view-instance]
@@ -75,12 +80,14 @@
   {:pre [view-instance on-state-changed]}
   (let [definition (get-definition view-instance)
         input-definitions (get-input-definitions view-instance)]
-    (set-input-system-instances-data! view-instance (reduce-kv (fn [input-state input-name input]
-                                                                 (assoc input-state
-                                                                   input-name
-                                                                   {:instance ((:get-instance (get-input-definition input-definitions (:name input)))
-                                                                                (merge (dissoc input :name)
-                                                                                       {:on-state-changed on-state-changed}))}))
+    (set-input-system-instances-data! view-instance (reduce-kv (fn [inputs-state input-name input-options]
+                                                                 (let [[input-definition predefined-options] (get-input-definition input-definitions (:name input-options))]
+                                                                   (assoc inputs-state
+                                                                     input-name
+                                                                     {:instance ((:get-instance input-definition)
+                                                                                  (merge predefined-options
+                                                                                         (dissoc input-options :name)
+                                                                                         {:on-state-changed on-state-changed}))})))
                                                                {}
                                                                (:input definition)))))
 
@@ -172,14 +179,15 @@
           input-definitions (get-input-definitions view-instance)
           output-definitions (get-output-definitions view-instance)]
       (reduce (fn [_ output]
-                (let [output-definition (get-output-definition output-definitions (:name output))]
+                (let [[output-definition predefined-options] (get-output-definition output-definitions (:name output))]
                   ((:handle! output-definition)
-                    {:view-output         output
-                     :view-state          (get-view-input view-instance)
-                     :render!             (get-render-fn view-instance)
-                     :input-definitions   input-definitions
-                     :output-definitions  output-definitions
-                     :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})})))
+                    (merge predefined-options
+                           {:view-output         output
+                            :view-state          (get-view-input view-instance)
+                            :render!             (get-render-fn view-instance)
+                            :input-definitions   input-definitions
+                            :output-definitions  output-definitions
+                            :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})}))))
               nil
               (:output definition)))))
 

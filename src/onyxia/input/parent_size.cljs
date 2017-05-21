@@ -205,7 +205,7 @@
     (:width state)
     (:height state)))
 
-(defn get-definition []
+(def definition
   {:name         "parent-size"
    :get-instance (fn [{on-state-changed :on-state-changed
                        dimension        :dimension

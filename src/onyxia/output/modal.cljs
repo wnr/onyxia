@@ -27,10 +27,9 @@
     [:h1 title]
     [:div body]]])
 
-(defn get-definition
-  [{at-body-root-view :at-body-root-view-output-definition}]
+(def definition
   {:name    "modal"
-   :handle! (fn [args]
+   :handle! (fn [{at-body-root-view :at-body-root-view-output-definition :as args}]
               ((:handle! at-body-root-view)
                 (update args :view-output (fn [view-output]
                                             (-> view-output

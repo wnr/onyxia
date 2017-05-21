@@ -1,8 +1,7 @@
 (ns onyxia.input.element-active
   (:require [onyxia.attributes :refer [add-event-handler]]))
 
-(defn get-definition
-  []
+(def definition
   {:name         "element_active"
    :get-instance (fn [{on-state-changed :on-state-changed}]
                    (let [state-atom (atom {:active nil})]

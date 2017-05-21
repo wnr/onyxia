@@ -32,7 +32,7 @@
    :previous-x (:previous-x system-state)
    :previous-y (:previous-y system-state)})
 
-(defn get-definition []
+(def definition
   {:name         "mouse-position"
    :get-instance (fn [{on-state-changed :on-state-changed}]
                    (swap! system-state-atom (fn [system-state] (update-in system-state [:view-on-state-changed-fns] conj on-state-changed)))

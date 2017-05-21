@@ -62,7 +62,7 @@
   (create-container-element!)
   (swap! system-atom set-current-view-context nil))
 
-(defn get-definition []
+(def definition
   {:name    "at-body-root-view"
    :handle! (fn [{view-output         :view-output
                   view-state          :view-state
