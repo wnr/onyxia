@@ -4,15 +4,12 @@
     [cljsjs.inferno.create-element]
     [cljsjs.inferno.component]
     [cljsjs.inferno.create-class]
-    ;; Borrowing some react utils for now.
-    [onyxia.engine.react-utils :refer [map-to-react-attributes
-                                       add-key-attribute]]
+    [onyxia.engine.inferno-utils :refer [map-to-inferno-attributes
+                                         add-key-attribute]]
     [onyxia.vdom :as vdom]
     [ysera.error :refer [error]]
     [onyxia.view-instance :as vi]
     [onyxia.dom-operator :refer [add-pending-operation!]]))
-
-(def map-to-inferno-attributes map-to-react-attributes)
 
 (declare create-inferno-element)
 (declare render!)

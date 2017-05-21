@@ -165,32 +165,36 @@
              (should-render?-fn (get-view-input view-instance))
              true)))))
 
+(defn handle-output-systems!
+  [view-instance]
+  (when (should-render? view-instance)
+    (let [definition (get-definition view-instance)
+          input-definitions (get-input-definitions view-instance)
+          output-definitions (get-output-definitions view-instance)]
+      (reduce (fn [_ output]
+                (let [output-definition (get-output-definition output-definitions (:name output))]
+                  ((:handle! output-definition)
+                    {:view-output         output
+                     :view-state          (get-view-input view-instance)
+                     :render!             (get-render-fn view-instance)
+                     :input-definitions   input-definitions
+                     :output-definitions  output-definitions
+                     :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})})))
+              nil
+              (:output definition)))))
+
 (defn will-mount!
   [view-instance {parent-input     :parent-input
                   on-state-changed :on-state-changed}]
-  (let [definition (get-definition view-instance)]
+  (let [handle-state-change (fn []
+                              (handle-output-systems! view-instance)
+                              (on-state-changed))]
     (init-view-state! view-instance)
     (set-parent-input! view-instance parent-input)
-    (init-input-systems! view-instance {:on-state-changed on-state-changed})
-    (let [view-state-atom (get-view-state-atom view-instance)
-          input-definitions (get-input-definitions view-instance)
-          output-definitions (get-output-definitions view-instance)]
-      (add-watch view-state-atom
-                 :on-state-changed-notifier
-                 (fn [_ _ _ _]
-                   (when (should-render? view-instance)
-                     (reduce (fn [_ output]
-                               (let [output-definition (get-output-definition output-definitions (:name output))]
-                                 ((:handle! output-definition)
-                                   {:view-output         output
-                                    :view-state          (get-view-input view-instance)
-                                    :render!             (get-render-fn view-instance)
-                                    :input-definitions   input-definitions
-                                    :output-definitions  output-definitions
-                                    :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom view-state-atom})})))
-                             nil
-                             (:output definition))
-                     (on-state-changed)))))))
+    (init-input-systems! view-instance {:on-state-changed handle-state-change})
+    (add-watch (get-view-state-atom view-instance)
+               :on-state-changed-notifier
+               (fn [_ _ _ _] (handle-state-change)))))
 
 (defn did-render!
   [view-instance]
