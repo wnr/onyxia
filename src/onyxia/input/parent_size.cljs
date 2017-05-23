@@ -209,14 +209,16 @@
   {:name         "parent-size"
    :get-instance (fn [{on-state-changed :on-state-changed
                        dimension        :dimension
-                       :as              options}]
-                   (let [state-atom (atom {:width  nil
+                       should-update?   :should-update?}]
+                   (let [should-update? (or should-update? (fn [] true))
+                         state-atom (atom {:width  nil
                                            :height nil})
                          on-resize-listener (fn [{width :width height :height}]
-                                              (swap! state-atom (fn [state]
-                                                                  (merge state {:width  width
-                                                                                :height height})))
-                                              (on-state-changed))]
+                                              (when (should-update?)
+                                                (swap! state-atom (fn [state]
+                                                                    (merge state {:width  width
+                                                                                  :height height})))
+                                                (on-state-changed)))]
                      {:ready?       (fn []
                                       (not (nil? (get-size-input-value @state-atom dimension))))
                       :get-value    (fn []
