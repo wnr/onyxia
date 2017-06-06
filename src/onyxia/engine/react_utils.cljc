@@ -149,6 +149,23 @@
     [handlers]
     (or handlers [])))
 
+(defn map-attribute-events
+  [attrs {on-dom-event :on-dom-event}]
+  (let [handle-dom-event (fn [{attributes-key :attributes-key
+                               type           :type
+                               event          :event}]
+                           (on-dom-event {:type      type
+                                          :dom-event :event
+                                          :event     event
+                                          :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
+    (-> attrs
+        (change-attribute {:key :on-click :new-key :onClick :assoc (fn [e] (handle-dom-event {:attributes-key :on-click :type :on-click :event e}))})
+        (change-attribute {:key :on-mouse-enter :new-key :onMouseEnter :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-enter :type :on-mouse-enter :event e}))})
+        (change-attribute {:key :on-mouse-leave :new-key :onMouseLeave :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-leave :type :on-mouse-leave :event e}))})
+        (change-attribute {:key :on-mouse-up :new-key :onMouseUp :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-up :type :on-mouse-up :event e}))})
+        (change-attribute {:key :on-mouse-down :new-key :onMouseDown :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-down :type :on-mouse-down :event e}))})
+        (change-attribute {:key :on-change :new-key :onChange :assoc (fn [e] (handle-dom-event {:attributes-key :on-change :type :on-change :event e}))}))))
+
 (defn
   ^{:test (fn []
             ;; Keep unknown attributes unchanged.
@@ -163,21 +180,12 @@
             ;; Map special SVG attributes
             (is= (map-to-react-attributes {:text-anchor "foo" :xlink:href "bar"} {})
                  {"textAnchor" "foo" "xlinkHref" "bar"}))}
-  map-to-react-attributes [attrs {on-dom-event :on-dom-event}]
-  (let [handle-dom-event (fn [{attributes-key :attributes-key
-                               type           :type}]
-                           (on-dom-event {:type      type
-                                          :dom-event :event
-                                          :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
-    (-> attrs
-        (change-attribute {:key :class :new-key :className})
-        (change-attribute {:key :on-click :new-key :onClick :assoc (fn [_] (handle-dom-event {:attributes-key :on-click :type :on-click}))})
-        (change-attribute {:key :on-mouse-enter :new-key :onMouseEnter :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-enter :type :on-mouse-enter}))})
-        (change-attribute {:key :on-mouse-leave :new-key :onMouseLeave :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-leave :type :on-mouse-leave}))})
-        (change-attribute {:key :on-mouse-up :new-key :onMouseUp :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-up :type :on-mouse-up}))})
-        (change-attribute {:key :on-mouse-down :new-key :onMouseDown :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-down :type :on-mouse-down}))})
-        (change-attribute {:key :style :update style->react-style})
-        (map-svg-attributes))))
+  map-to-react-attributes [attrs {on-dom-event :on-dom-event :as args}]
+  (-> attrs
+      (change-attribute {:key :class :new-key :className})
+      (map-attribute-events args)
+      (change-attribute {:key :style :update style->react-style})
+      (map-svg-attributes)))
 
 
 (defn add-key-attribute

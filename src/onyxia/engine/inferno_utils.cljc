@@ -43,20 +43,11 @@
             ;; Map special SVG attributes
             (is= (map-to-inferno-attributes {:text-anchor "foo" :xlink:href "bar"} {})
                  {"textAnchor" "foo" "xlinkHref" "bar"}))}
-  map-to-inferno-attributes [attrs {on-dom-event :on-dom-event}]
-  (let [handle-dom-event (fn [{attributes-key :attributes-key
-                               type           :type}]
-                           (on-dom-event {:type      type
-                                          :dom-event :event
-                                          :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
-    (-> attrs
-        (change-attribute {:key :class :new-key :className})
-        (change-attribute {:key :on-click :new-key :onClick :assoc (fn [_] (handle-dom-event {:attributes-key :on-click :type :on-click}))})
-        (change-attribute {:key :on-mouse-enter :new-key :onMouseEnter :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-enter :type :on-mouse-enter}))})
-        (change-attribute {:key :on-mouse-leave :new-key :onMouseLeave :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-leave :type :on-mouse-leave}))})
-        (change-attribute {:key :on-mouse-up :new-key :onMouseUp :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-up :type :on-mouse-up}))})
-        (change-attribute {:key :on-mouse-down :new-key :onMouseDown :assoc (fn [_] (handle-dom-event {:attributes-key :on-mouse-down :type :on-mouse-down}))})
-        (change-attribute {:key :style :update style->inferno-style}))))
+  map-to-inferno-attributes [attrs {on-dom-event :on-dom-event :as args}]
+  (-> attrs
+      (change-attribute {:key :class :new-key :className})
+      (react-utils/map-attribute-events args)
+      (change-attribute {:key :style :update style->inferno-style})))
 
 
 (defn add-key-attribute

@@ -240,7 +240,8 @@
          :element (get-parent-element view-instance)}))))
 
 (defn handle-dom-event
-  [view-instance {handlers :handlers}]
+  [view-instance {handlers :handlers
+                  event    :event}]
   (let [definition (get-definition view-instance)]
     (doseq [handler handlers]
       (if (sequential? handler)
@@ -252,7 +253,8 @@
                               (second handler)
                               (first handler))
               handle-fn (get (:events event-handling-definition) handle-fn-key)
-              handle-fn-data (last handler)]
+              handle-fn-data (merge (last handler)
+                                    {:event event})]
           (if (not handle-fn)
             (throw (error (str "Cannot find " handle-fn-key " function in definition " (:name event-handling-definition))))
             (let [handling-view-state-atom (if (not= event-handling-definition definition)

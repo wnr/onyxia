@@ -1,9 +1,9 @@
 (ns onyxia.engine.inferno
   (:require
-    [cljsjs.inferno]
-    [cljsjs.inferno.create-element]
-    [cljsjs.inferno.component]
-    [cljsjs.inferno.create-class]
+    ;[cljsjs.inferno]
+    ;[cljsjs.inferno.create-element]
+    ;[cljsjs.inferno.component]
+    ;[cljsjs.inferno.create-class]
     [onyxia.engine.inferno-utils :refer [map-to-inferno-attributes
                                          add-key-attribute]]
     [onyxia.vdom :as vdom]
@@ -54,8 +54,8 @@
                                                                      (when (vi/all-input-system-instances-ready? view-instance)
                                                                        (create-inferno-element ((:render definition)
                                                                                                  (vi/get-view-input view-instance))
-                                                                                               {:on-dom-event        (fn [{handlers :handlers}]
-                                                                                                                       (vi/handle-dom-event view-instance {:handlers handlers}))
+                                                                                               {:on-dom-event        (fn [data]
+                                                                                                                       (vi/handle-dom-event view-instance data))
                                                                                                 :input-definitions   input-definitions
                                                                                                 :output-definitions  output-definitions
                                                                                                 :ancestor-views-data (assoc ancestor-views-data definition {:view-state-atom (vi/get-view-state-atom view-instance)})
