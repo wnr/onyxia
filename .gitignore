@@ -15,3 +15,4 @@ pom.xml.asc
 .cljs_rhino_repl/
 checkouts/
 *.iml
+.idea

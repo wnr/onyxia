@@ -223,7 +223,7 @@
                                       (not (nil? (get-size-input-value @state-atom dimension))))
                       :get-value    (fn []
                                       (get-size-input-value @state-atom dimension))
-                      :did-mount    (fn [{element :element :as options}]
+                      :did-mount    (fn [{element :element}]
                                       (install! {:element   element
                                                  :on-resize on-resize-listener})
                                       {:operation :read-dom
