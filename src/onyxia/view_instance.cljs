@@ -202,7 +202,12 @@
     (init-input-systems! view-instance {:on-state-changed handle-state-change})
     (add-watch (get-view-state-atom view-instance)
                :on-state-changed-notifier
-               (fn [_ _ _ _] (handle-state-change)))))
+               (fn [_ _ _ _] (handle-state-change)))
+    (add-watch view-instance
+               :on-state-changed-notifier
+               (fn [_ _ old-value new-value]
+                 (when (not= (:parent-input old-value) (:parent-input new-value))
+                   (handle-state-change))))))
 
 (defn did-render!
   [view-instance]
