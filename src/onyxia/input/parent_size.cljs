@@ -114,7 +114,9 @@
                                           (add-pending-operation!
                                             {:operation :write-dom
                                              :execute!  (fn inject-elements []
-                                                          (aset element "style" "position" "relative")
+                                                          (let [position (aget style "position")]
+                                                            (when (or (nil? position) (empty? position) (= position "static"))
+                                                              (aset element "style" "position" "relative")))
                                                           (let [element-state (get-element-state! element)
                                                                 element-width (:width (:start-size element-state))
                                                                 element-height (:height (:start-size element-state))
