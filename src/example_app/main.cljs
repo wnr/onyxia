@@ -1,6 +1,6 @@
 (ns example-app.main
   (:require [ysera.error :refer [error]]
-            [onyxia.engine.react :refer [render!]]
+            [onyxia.engine.inferno :refer [render!]]
             [onyxia.input.parent-size]
             [onyxia.input.element-hovered]
             [onyxia.input.element-active]

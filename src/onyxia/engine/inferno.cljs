@@ -1,9 +1,9 @@
 (ns onyxia.engine.inferno
   (:require
-    ;[cljsjs.inferno]
-    ;[cljsjs.inferno.create-element]
-    ;[cljsjs.inferno.component]
-    ;[cljsjs.inferno.create-class]
+    [cljsjs.inferno]
+    [cljsjs.inferno.create-element]
+    [cljsjs.inferno.component]
+    [cljsjs.inferno.create-class]
     [onyxia.engine.inferno-utils :refer [map-to-inferno-attributes
                                          add-key-attribute]]
     [onyxia.vdom :as vdom]
