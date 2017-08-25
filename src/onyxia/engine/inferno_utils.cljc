@@ -29,7 +29,7 @@
     [handlers]
     (or handlers [])))
 
-(defn
+(defn map-to-inferno-attributes
   ^{:test (fn []
             ;; Keep unknown attributes unchanged.
             (is= (map-to-inferno-attributes {:unknown "test"} {})
@@ -43,7 +43,7 @@
             ;; Map special SVG attributes
             (is= (map-to-inferno-attributes {:text-anchor "foo" :xlink:href "bar"} {})
                  {"textAnchor" "foo" "xlinkHref" "bar"}))}
-  map-to-inferno-attributes [attrs {on-dom-event :on-dom-event :as args}]
+  [attrs {on-dom-event :on-dom-event :as args}]
   (-> attrs
       (change-attribute {:key :class :new-key :className})
       (react-utils/map-attribute-events args)

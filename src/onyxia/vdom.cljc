@@ -1,7 +1,7 @@
 (ns onyxia.vdom
   (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is= is is-not]]))
 
-(defn-
+(defn- clean-element-sequence
   ^{:test (fn []
             (is= (clean-element-sequence
                    [[:div] [:div]])
@@ -34,7 +34,7 @@
             (is= (clean-element-sequence
                    [[]])
                  []))}
-  clean-element-sequence [seq]
+  [seq]
   (->> (reduce (fn [result entry]
                  (if (not (sequential? entry))
                    (conj result entry)

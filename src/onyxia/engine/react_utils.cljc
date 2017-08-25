@@ -166,7 +166,7 @@
         (change-attribute {:key :on-mouse-down :new-key :onMouseDown :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-down :type :on-mouse-down :event e}))})
         (change-attribute {:key :on-change :new-key :onChange :assoc (fn [e] (handle-dom-event {:attributes-key :on-change :type :on-change :event e}))}))))
 
-(defn
+(defn map-to-react-attributes
   ^{:test (fn []
             ;; Keep unknown attributes unchanged.
             (is= (map-to-react-attributes {:unknown "test"} {})
@@ -180,7 +180,7 @@
             ;; Map special SVG attributes
             (is= (map-to-react-attributes {:text-anchor "foo" :xlink:href "bar"} {})
                  {"textAnchor" "foo" "xlinkHref" "bar"}))}
-  map-to-react-attributes [attrs {on-dom-event :on-dom-event :as args}]
+  [attrs {on-dom-event :on-dom-event :as args}]
   (-> attrs
       (change-attribute {:key :class :new-key :className})
       (map-attribute-events args)
