@@ -70,11 +70,20 @@
                   input-definitions   :input-definitions
                   output-definitions  :output-definitions
                   ancestor-views-data :ancestor-views-data}]
-              (let [view ((:get-view view-output) view-state)]
-                (if view
-                  (swap! system-atom set-wanted-view-context {:view                view
-                                                              :render!             render!
-                                                              :input-definitions   input-definitions
-                                                              :output-definitions  output-definitions
-                                                              :ancestor-views-data ancestor-views-data})
-                  (swap! system-atom clear-wanted-view-context))))})
+              (let [current-view-context (get-current-view-context @system-atom)]
+                (when (or (nil? current-view-context)
+                          (= view-output (:view-output current-view-context)))
+                  ;; If there is no current at-body-root-view, it is free for any view to request one.
+                  ;; If there is an active at-body-root-view, only the view that requested it may remove it.
+                  ;; It might be nice to be able to define custom priority strategies in the future.
+                  (let [at-body-root-view ((:get-view view-output) view-state)]
+                    (if at-body-root-view
+                      (swap! system-atom set-wanted-view-context {:view                at-body-root-view
+                                                                  :render!             render!
+                                                                  :input-definitions   input-definitions
+                                                                  :output-definitions  output-definitions
+                                                                  :ancestor-views-data ancestor-views-data
+                                                                  ;; We add this so that we can make sure that only the view that
+                                                                  ;; once added the at-body-root-view may clear it.
+                                                                  :view-output         view-output})
+                      (swap! system-atom clear-wanted-view-context))))))})
