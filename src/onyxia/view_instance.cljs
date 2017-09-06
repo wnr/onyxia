@@ -271,7 +271,7 @@
                                                   result
                                                   state))))))
         ;; A raw function has been passed as handler, simply invoke it.
-        (handler)))))
+        (handler event)))))
 
 (defn modify-attributes
   [attributes {view-instance :view-instance}]

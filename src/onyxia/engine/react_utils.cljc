@@ -160,6 +160,9 @@
                                           :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
     (-> attrs
         (change-attribute {:key :on-click :new-key :onClick :assoc (fn [e] (handle-dom-event {:attributes-key :on-click :type :on-click :event e}))})
+        (change-attribute {:key :on-input :new-key :onChange :assoc (fn [e]
+                                                                        (println e)
+                                                                        (handle-dom-event {:attributes-key :on-input :type :on-input :event e}))})
         (change-attribute {:key :on-mouse-enter :new-key :onMouseEnter :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-enter :type :on-mouse-enter :event e}))})
         (change-attribute {:key :on-mouse-leave :new-key :onMouseLeave :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-leave :type :on-mouse-leave :event e}))})
         (change-attribute {:key :on-mouse-up :new-key :onMouseUp :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-up :type :on-mouse-up :event e}))})
