@@ -38,6 +38,9 @@
 (defn get-shrink-child-element! [element]
   (:shrink-child-element (get-element-state! element)))
 
+(defn get-container-element [element]
+  (:container (get-element-state! element)))
+
 (defn get-width-offset [scrollbar-width]
   (* 2 (+ scrollbar-width 1)))
 
@@ -170,13 +173,21 @@
       (add-system-ready-listener! _install!)
       (_install!))))
 
-(defn uninstall!
+(defn handle-unmount!
   [{element   :element
+    root-element :root-element
     on-resize :on-resize}]
   (when (.-_erd element)
-    (do
-      (set! (.-_erd element) (update (.-_erd element) :listeners (fn [listeners]
-                                                                   (remove #{on-resize} listeners)))))))
+    (if (= root-element element)
+      (let [shrink (get-shrink-element! element)
+            expand (get-expand-element! element)
+            container (get-container-element element)
+            element-state (get-element-state! element)]
+        (.removeEventListener shrink "scroll" (:on-shrink-scroll element-state))
+        (.removeEventListener expand "scroll" (:on-expand-scroll element-state))
+        (.removeChild element container)
+        (aset element "_erd" nil))
+      (set! (.-_erd element) (update (.-_erd element) :listeners (fn [listeners] (remove #{on-resize} listeners)))))))
 
 (when (nil? (:scrollbar-size @system-state-atom))
   (add-pending-operation! {:operation :write-dom
@@ -215,13 +226,12 @@
   {:name         "parent-size"
    :get-instance (fn [{on-state-changed :on-state-changed
                        dimension        :dimension
-                       should-update?   :should-update?}]
+                       should-update?   :should-update?
+                       root-element :root-element}]
                    (let [should-update? (or should-update? (fn [] true))
                          state-atom (atom {:width  nil
                                            :height nil})
                          on-resize-listener (fn [{width :width height :height}]
-                                              (println "Resize detected")
-                                              (println (should-update?))
                                               (when (should-update?)
                                                 (swap! state-atom (fn [state]
                                                                     (merge state {:width  width
@@ -234,7 +244,6 @@
                       :did-mount    (fn [{element :element}]
                                       (install! {:element   element
                                                  :on-resize (fn [x]
-                                                              (println (.-id element))
                                                               (on-resize-listener x))})
                                       {:operation :read-dom
                                        :execute!  (fn []
@@ -243,5 +252,6 @@
                                                                                       :height (.-offsetHeight element)})))
                                                     (on-state-changed))})
                       :will-unmount (fn [{element :element}]
-                                      (uninstall! {:element   element
+                                      (handle-unmount! {:element   element
+                                                        :root-element root-element
                                                    :on-resize on-resize-listener}))}))})

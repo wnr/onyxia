@@ -1,5 +1,6 @@
 (ns onyxia.attributes-utils
-  (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]))
+  (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]
+            [camel-snake-kebab.core :refer [->camelCase]]))
 
 (defn replace-key
   ([map key new-key]
@@ -15,6 +16,26 @@
   (if (contains? map key)
     (update map key value)
     map))
+
+(defn formalize-event-handlers
+  {:test (fn []
+           (is= (formalize-event-handlers nil) [])
+           (is= (formalize-event-handlers []) [])
+           (is= (formalize-event-handlers [:foo]) [[:foo]])
+           (is= (formalize-event-handlers [{} :foo]) [[{} :foo]])
+           (is= (formalize-event-handlers +) [+])
+           (is= (formalize-event-handlers [[:foo]]) [[:foo]])
+           (is= (formalize-event-handlers [[{} :foo]]) [[{} :foo]])
+           (is= (formalize-event-handlers [+]) [+]))}
+  [handlers]
+  (if (or (and (coll? handlers)
+               (not (empty? handlers))
+               (or (map? (first handlers))
+                   (keyword? (first handlers))))
+          (and (not (coll? handlers))
+               (not (nil? handlers))))
+    [handlers]
+    (or handlers [])))
 
 (defn change-attribute
   {:test (fn []
@@ -46,3 +67,22 @@
                                  (merge-fn (get attributes new-key) (get $ key))
                                  (get $ key))))
             $))))
+
+(defn map-default-attribute-events
+  [attrs {on-dom-event :on-dom-event
+          attribute-keys :attribute-keys}]
+  (let [handle-dom-event (fn [{attributes-key :attributes-key
+                               type           :type
+                               event          :event}]
+                           (on-dom-event {:type      type
+                                          :dom-event :event
+                                          :event     event
+                                          :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
+    (reduce (fn [attrs attribute-key]
+              (change-attribute attrs {:key attribute-key
+                                       :new-key (->camelCase attribute-key)
+                                       :assoc (fn [e] (handle-dom-event {:attributes-key attribute-key
+                                                                         :type attribute-key
+                                                                         :event e}))}))
+            attrs
+            attribute-keys)))

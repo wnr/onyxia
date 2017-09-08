@@ -76,7 +76,8 @@
        (map :instance)))
 
 (defn init-input-systems!
-  [view-instance {on-state-changed :on-state-changed}]
+  [view-instance {on-state-changed :on-state-changed
+                  root-element :root-element}]
   {:pre [view-instance on-state-changed]}
   (let [definition (get-definition view-instance)
         input-definitions (get-input-definitions view-instance)]
@@ -87,7 +88,8 @@
                                                                      {:instance ((:get-instance input-definition)
                                                                                   (merge predefined-options
                                                                                          (dissoc input-options :name)
-                                                                                         {:on-state-changed on-state-changed}))})))
+                                                                                         {:on-state-changed on-state-changed
+                                                                                          :root-element root-element}))})))
                                                                {}
                                                                (:input definition)))))
 
@@ -193,13 +195,15 @@
 
 (defn will-mount!
   [view-instance {parent-input     :parent-input
-                  on-state-changed :on-state-changed}]
+                  on-state-changed :on-state-changed
+                  root-element :root-element}]
   (let [handle-state-change (fn []
                               (handle-output-systems! view-instance)
                               (on-state-changed))]
     (init-view-state! view-instance)
     (set-parent-input! view-instance parent-input)
-    (init-input-systems! view-instance {:on-state-changed handle-state-change})
+    (init-input-systems! view-instance {:on-state-changed handle-state-change
+                                        :root-element root-element})
     (add-watch (get-view-state-atom view-instance)
                :on-state-changed-notifier
                (fn [_ _ _ _] (handle-state-change)))

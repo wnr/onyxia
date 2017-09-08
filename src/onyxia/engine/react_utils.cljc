@@ -2,7 +2,7 @@
   (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]
             [ysera.error :refer [error]]
             [camel-snake-kebab.core :refer [->camelCase]]
-            [onyxia.attributes-utils :refer [replace-key replace-value change-attribute]]))
+            [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-events formalize-event-handlers]]))
 
 (defn style->react-style
   "Maps a given style map to a react-flavored style map (with camedlcased keys, etc.).
@@ -129,25 +129,25 @@
           attrs
           (keys attrs)))
 
-(defn formalize-event-handlers
-  {:test (fn []
-           (is= (formalize-event-handlers nil) [])
-           (is= (formalize-event-handlers []) [])
-           (is= (formalize-event-handlers [:foo]) [[:foo]])
-           (is= (formalize-event-handlers [{} :foo]) [[{} :foo]])
-           (is= (formalize-event-handlers +) [+])
-           (is= (formalize-event-handlers [[:foo]]) [[:foo]])
-           (is= (formalize-event-handlers [[{} :foo]]) [[{} :foo]])
-           (is= (formalize-event-handlers [+]) [+]))}
-  [handlers]
-  (if (or (and (coll? handlers)
-               (not (empty? handlers))
-               (or (map? (first handlers))
-                   (keyword? (first handlers))))
-          (and (not (coll? handlers))
-               (not (nil? handlers))))
-    [handlers]
-    (or handlers [])))
+;(defn formalize-event-handlers
+;  {:test (fn []
+;           (is= (formalize-event-handlers nil) [])
+;           (is= (formalize-event-handlers []) [])
+;           (is= (formalize-event-handlers [:foo]) [[:foo]])
+;           (is= (formalize-event-handlers [{} :foo]) [[{} :foo]])
+;           (is= (formalize-event-handlers +) [+])
+;           (is= (formalize-event-handlers [[:foo]]) [[:foo]])
+;           (is= (formalize-event-handlers [[{} :foo]]) [[{} :foo]])
+;           (is= (formalize-event-handlers [+]) [+]))}
+;  [handlers]
+;  (if (or (and (coll? handlers)
+;               (not (empty? handlers))
+;               (or (map? (first handlers))
+;                   (keyword? (first handlers))))
+;          (and (not (coll? handlers))
+;               (not (nil? handlers))))
+;    [handlers]
+;    (or handlers [])))
 
 (defn map-attribute-events
   [attrs {on-dom-event :on-dom-event}]
@@ -159,30 +159,31 @@
                                           :event     event
                                           :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
     (-> attrs
-        (change-attribute {:key :on-click :new-key :onClick :assoc (fn [e] (handle-dom-event {:attributes-key :on-click :type :on-click :event e}))})
-        (change-attribute {:key :on-input :new-key :onChange :assoc (fn [e]
-                                                                        (println e)
-                                                                        (handle-dom-event {:attributes-key :on-input :type :on-input :event e}))})
-        (change-attribute {:key :on-mouse-enter :new-key :onMouseEnter :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-enter :type :on-mouse-enter :event e}))})
-        (change-attribute {:key :on-mouse-leave :new-key :onMouseLeave :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-leave :type :on-mouse-leave :event e}))})
-        (change-attribute {:key :on-mouse-up :new-key :onMouseUp :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-up :type :on-mouse-up :event e}))})
-        (change-attribute {:key :on-mouse-down :new-key :onMouseDown :assoc (fn [e] (handle-dom-event {:attributes-key :on-mouse-down :type :on-mouse-down :event e}))})
-        (change-attribute {:key :on-change :new-key :onChange :assoc (fn [e] (handle-dom-event {:attributes-key :on-change :type :on-change :event e}))}))))
+        (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [:on-click
+                                                                                   :on-mouse-down
+                                                                                   :on-mouse-enter
+                                                                                   :on-mouse-leave
+                                                                                   :on-mouse-up
+                                                                                   :on-change]})
+        (change-attribute {:key     :on-input
+                           :new-key :onChange
+                           :assoc   (fn [e]
+                                      (handle-dom-event {:attributes-key :on-input :type :on-input :event e}))}))))
 
 (defn map-to-react-attributes
-  ^{:test (fn []
-            ;; Keep unknown attributes unchanged.
-            (is= (map-to-react-attributes {:unknown "test"} {})
-                 {:unknown "test"})
-            ;; :class -> :className
-            (is= (map-to-react-attributes {:class "foo bar"} {})
-                 {:className "foo bar"})
-            ;; :style -> :style (with values changed to react-flavor).
-            (is= (map-to-react-attributes {:style {"padding-left" ""}} {})
-                 {:style {"paddingLeft" ""}})
-            ;; Map special SVG attributes
-            (is= (map-to-react-attributes {:text-anchor "foo" :xlink:href "bar"} {})
-                 {"textAnchor" "foo" "xlinkHref" "bar"}))}
+  {:test (fn []
+           ;; Keep unknown attributes unchanged.
+           (is= (map-to-react-attributes {:unknown "test"} {})
+                {:unknown "test"})
+           ;; :class -> :className
+           (is= (map-to-react-attributes {:class "foo bar"} {})
+                {:className "foo bar"})
+           ;; :style -> :style (with values changed to react-flavor).
+           (is= (map-to-react-attributes {:style {"padding-left" ""}} {})
+                {:style {"paddingLeft" ""}})
+           ;; Map special SVG attributes
+           (is= (map-to-react-attributes {:text-anchor "foo" :xlink:href "bar"} {})
+                {"textAnchor" "foo" "xlinkHref" "bar"}))}
   [attrs {on-dom-event :on-dom-event :as args}]
   (-> attrs
       (change-attribute {:key :class :new-key :className})

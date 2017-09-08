@@ -31,6 +31,7 @@
     input-definitions   :input-definitions
     output-definitions  :output-definitions
     ancestor-views-data :ancestor-views-data
+    root-element        :root-element
     :as                 args}]
   (js/React.createClass (clj->js {:displayName               (:name definition)
                                   :componentWillMount        (fn []
@@ -38,7 +39,8 @@
                                                                  (let [view-instance (vi/create-view-instance (merge args {:render! render!}))]
                                                                    (aset component "viewInstance" view-instance)
                                                                    (vi/will-mount! view-instance {:parent-input     (aget component "props" "input")
-                                                                                                  :on-state-changed (fn [] (.onStateChanged component))})))
+                                                                                                  :on-state-changed (fn [] (.onStateChanged component))
+                                                                                                  :root-element     root-element})))
                                                                nil)
                                   :componentDidMount         (fn []
                                                                (this-as component
@@ -96,6 +98,7 @@
                  output-definitions  :output-definitions
                  ancestor-views-data :ancestor-views-data   ;; Optional. Needed if function locators are to be sent from a view to another.
                  view-instance       :view-instance         ;; Optional. Needed to activate view-specific input systems. If not present, only standard HTML attributes and such will be processed.
+                 root-element        :root-element
                  :as                 system-options}]
   (ensure-global-react!)
   (cond
@@ -120,7 +123,8 @@
       (js/React.createElement (get-component {:definition          definition
                                               :input-definitions   input-definitions
                                               :output-definitions  output-definitions
-                                              :ancestor-views-data ancestor-views-data})
+                                              :ancestor-views-data ancestor-views-data
+                                              :root-element        root-element})
                               #js{:input input}))
 
     ;; A "normal" HTML DOM element.
@@ -167,5 +171,6 @@
     (let [react-element (create-react-element view {:input-definitions   input-definitions
                                                     :output-definitions  output-definitions
                                                     :on-dom-event        (fn [_])
-                                                    :ancestor-views-data ancestor-views-data})]
+                                                    :ancestor-views-data ancestor-views-data
+                                                    :root-element        target-element})]
       (js/ReactDOM.render react-element target-element))))
