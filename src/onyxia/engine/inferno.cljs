@@ -42,7 +42,8 @@
                                                                    (let [view-instance (vi/create-view-instance (merge args {:render! render!}))]
                                                                      (aset component "viewInstance" view-instance)
                                                                      (vi/will-mount! view-instance {:parent-input     (aget component "props" "input")
-                                                                                                    :on-state-changed (fn [] (.onStateChanged component))})))
+                                                                                                    :on-state-changed (fn []
+                                                                                                                        ((aget component "onStateChanged")))})))
                                                                  nil)
                                     :componentDidMount         (fn []
                                                                  (this-as component

@@ -30,28 +30,21 @@
 ;    (or handlers [])))
 
 (defn map-attribute-events [attrs {on-dom-event :on-dom-event}]
-  (let [handle-dom-event (fn [{attributes-key :attributes-key
-                               type           :type
-                               event          :event}]
-                           (on-dom-event {:type      type
-                                          :dom-event :event
-                                          :event     event
-                                          :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
-    (-> attrs
-        (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [
-                                                                                   :on-change
-                                                                                   :on-click
-                                                                                   :on-input
-                                                                                   :on-mouse-down
-                                                                                   :on-mouse-enter
-                                                                                   :on-mouse-leave
-                                                                                   :on-mouse-up
-                                                                                   ]})
-        ;(change-attribute {:key     :on-xxx
-        ;                   :new-key :onYyy
-        ;                   :assoc   (fn [e]
-        ;                              (handle-dom-event {:attributes-key :on-xxx :type :on-xxx :event e}))}))
-    )))
+  (-> attrs
+      (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [
+                                                                                 :on-change
+                                                                                 :on-click
+                                                                                 :on-input
+                                                                                 :on-mouse-down
+                                                                                 :on-mouse-enter
+                                                                                 :on-mouse-leave
+                                                                                 :on-mouse-up
+                                                                                 ]})
+      ;(change-attribute {:key     :on-xxx
+      ;                   :new-key :onYyy
+      ;                   :assoc   (fn [e]
+      ;                              (handle-dom-event {:attributes-key :on-xxx :type :on-xxx :event e}))}))
+      ))
 
 (defn map-to-inferno-attributes
   {:test (fn []
