@@ -16,7 +16,8 @@
                  [cljsjs/react-dom "15.4.2-2"]
                  [cljsjs/inferno "3.6.4-0"]
                  [ysera "1.0.3"]
-                 [camel-snake-kebab "0.4.0"]] ;; For converting snake-case to camel-case, etc.
+                 ;[camel-snake-kebab "0.4.0"]
+                 ] ;; For converting snake-case to camel-case, etc.
 
   :plugins [[lein-figwheel "0.5.9"]
             [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]]

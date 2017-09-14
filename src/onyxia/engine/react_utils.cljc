@@ -1,7 +1,8 @@
 (ns onyxia.engine.react-utils
   (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]
             [ysera.error :refer [error]]
-            [camel-snake-kebab.core :refer [->camelCase]]
+            ;[camel-snake-kebab.core :refer [->camelCase]]
+            [onyxia.attributes-map :refer [kebab->camel]]
             [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-events formalize-event-handlers]]))
 
 (defn style->react-style
@@ -18,18 +19,10 @@
                 {"paddingLeft" "1px solid black"}))}
   [style]
   (reduce (fn [react-style [key value]]
-            (let [key (name key)
-                  value (if (number? value)
+            (let [value (if (number? value)
                           (str value)
                           (name value))
-                  react-key (condp re-seq key
-                              ;; single word keys such as "position", "left", etc.
-                              #"^\w+$" key
-
-                              ;; snake-cased non-prefixed multiword keys such as "padding-left", "align-items", etc.
-                              #"^\w+(\-\w+)+$" (->camelCase key)
-
-                              (error "Style property " key " not implemented."))]
+                  react-key (kebab->camel key)]
               (assoc react-style react-key value)))
           {}
           style))

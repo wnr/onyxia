@@ -1,33 +1,20 @@
 (ns onyxia.engine.inferno-utils
   (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]
             [ysera.error :refer [error]]
-            [camel-snake-kebab.core :refer [->camelCase]]
-            [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-events formalize-event-handlers]]
-            [onyxia.engine.react-utils :as react-utils]))
+            [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-events formalize-event-handlers]]))
 
 (defn style->inferno-style
+  "Maps a given style map to a inferno-flavored style map (with camedlcased keys, etc.).
+   See https://facebook.github.io/react/docs/dom-elements.html#style"
   [style]
-  (react-utils/style->react-style style))
-
-;(defn formalize-event-handlers
-;  {:test (fn []
-;           (is= (formalize-event-handlers nil) [])
-;           (is= (formalize-event-handlers []) [])
-;           (is= (formalize-event-handlers [:foo]) [[:foo]])
-;           (is= (formalize-event-handlers [{} :foo]) [[{} :foo]])
-;           (is= (formalize-event-handlers +) [+])
-;           (is= (formalize-event-handlers [[:foo]]) [[:foo]])
-;           (is= (formalize-event-handlers [[{} :foo]]) [[{} :foo]])
-;           (is= (formalize-event-handlers [+]) [+]))}
-;  [handlers]
-;  (if (or (and (coll? handlers)
-;               (not (empty? handlers))
-;               (or (map? (first handlers))
-;                   (keyword? (first handlers))))
-;          (and (not (coll? handlers))
-;               (not (nil? handlers))))
-;    [handlers]
-;    (or handlers [])))
+  (reduce (fn [inferno-style [key value]]
+            (let [string-key (name key)
+                  string-value (if (number? value)
+                          (str value)
+                          (name value))]
+              (assoc inferno-style string-key string-value)))
+          {}
+          style))
 
 (defn map-attribute-events [attrs {on-dom-event :on-dom-event}]
   (-> attrs
@@ -60,7 +47,7 @@
            ;; Map special SVG attributes
            (is= (map-to-inferno-attributes {:text-anchor "foo" :xlink:href "bar"} {})
                 {"textAnchor" "foo" "xlinkHref" "bar"}))}
-  [attrs {on-dom-event :on-dom-event :as args}]
+  [attrs args]
   (-> attrs
       (change-attribute {:key :class :new-key :className})
       (map-attribute-events args)

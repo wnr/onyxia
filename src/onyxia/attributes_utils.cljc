@@ -1,6 +1,7 @@
 (ns onyxia.attributes-utils
   (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]
-            [camel-snake-kebab.core :refer [->camelCase]]))
+    ;[camel-snake-kebab.core :refer [->camelCase]]
+            [onyxia.attributes-map :refer [kebab->camel]]))
 
 (defn replace-key
   ([map key new-key]
@@ -69,7 +70,7 @@
             $))))
 
 (defn map-default-attribute-events
-  [attrs {on-dom-event :on-dom-event
+  [attrs {on-dom-event   :on-dom-event
           attribute-keys :attribute-keys}]
   (let [handle-dom-event (fn [{attributes-key :attributes-key
                                type           :type
@@ -79,10 +80,11 @@
                                           :event     event
                                           :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
     (reduce (fn [attrs attribute-key]
-              (change-attribute attrs {:key attribute-key
-                                       :new-key (->camelCase attribute-key)
-                                       :assoc (fn [e] (handle-dom-event {:attributes-key attribute-key
-                                                                         :type attribute-key
-                                                                         :event e}))}))
+              (change-attribute attrs {:key     attribute-key
+                                       :new-key (kebab->camel attribute-key) ;(->camelCase attribute-key)
+                                       :assoc   (fn [e] (handle-dom-event {:attributes-key attribute-key
+                                                                           :type           attribute-key
+                                                                           :event          e}))
+                                       }))
             attrs
             attribute-keys)))
