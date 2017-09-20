@@ -69,10 +69,11 @@
                   render!             :render!
                   input-definitions   :input-definitions
                   output-definitions  :output-definitions
-                  ancestor-views-data :ancestor-views-data}]
+                  ancestor-views-data :ancestor-views-data
+                  view-instance-id    :view-instance-id}]
               (let [current-view-context (get-current-view-context @system-atom)]
                 (when (or (nil? current-view-context)
-                          (= view-output (:view-output current-view-context)))
+                          (= view-instance-id (:view-instance-id current-view-context)))
                   ;; If there is no current at-body-root-view, it is free for any view to request one.
                   ;; If there is an active at-body-root-view, only the view that requested it may remove it.
                   ;; It might be nice to be able to define custom priority strategies in the future.
@@ -83,7 +84,7 @@
                                                                   :input-definitions   input-definitions
                                                                   :output-definitions  output-definitions
                                                                   :ancestor-views-data ancestor-views-data
-                                                                  ;; We add this so that we can make sure that only the view that
+                                                                  ;; We add this so that we can make sure that only the view instance that
                                                                   ;; once added the at-body-root-view may clear it.
-                                                                  :view-output         view-output})
+                                                                  :view-instance-id    view-instance-id})
                       (swap! system-atom clear-wanted-view-context))))))})
