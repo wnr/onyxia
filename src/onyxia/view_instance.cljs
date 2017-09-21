@@ -19,7 +19,12 @@
          :parent-element       nil
          :parent-input         nil
          :mounted              false
-         :has-been-mounted     false}))
+         :has-been-mounted     false
+         :id                   (str (js/Math.random))}))
+
+(defn get-id
+  [view-instance]
+  (:id (deref view-instance)))
 
 (defn get-definition
   [view-instance]
@@ -77,7 +82,7 @@
 
 (defn init-input-systems!
   [view-instance {on-state-changed :on-state-changed
-                  root-element :root-element}]
+                  root-element     :root-element}]
   {:pre [view-instance on-state-changed]}
   (let [definition (get-definition view-instance)
         input-definitions (get-input-definitions view-instance)]
@@ -89,7 +94,7 @@
                                                                                   (merge predefined-options
                                                                                          (dissoc input-options :name)
                                                                                          {:on-state-changed on-state-changed
-                                                                                          :root-element root-element}))})))
+                                                                                          :root-element     root-element}))})))
                                                                {}
                                                                (:input definition)))))
 
@@ -189,21 +194,22 @@
                             :render!             (get-render-fn view-instance)
                             :input-definitions   input-definitions
                             :output-definitions  output-definitions
-                            :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})}))))
+                            :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})
+                            :view-instance-id    (get-id view-instance)}))))
               nil
               (:output definition)))))
 
 (defn will-mount!
   [view-instance {parent-input     :parent-input
                   on-state-changed :on-state-changed
-                  root-element :root-element}]
+                  root-element     :root-element}]
   (let [handle-state-change (fn []
                               (handle-output-systems! view-instance)
                               (on-state-changed))]
     (init-view-state! view-instance)
     (set-parent-input! view-instance parent-input)
     (init-input-systems! view-instance {:on-state-changed handle-state-change
-                                        :root-element root-element})
+                                        :root-element     root-element})
     (add-watch (get-view-state-atom view-instance)
                :on-state-changed-notifier
                (fn [_ _ _ _] (handle-state-change)))

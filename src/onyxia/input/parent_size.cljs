@@ -174,9 +174,9 @@
       (_install!))))
 
 (defn handle-unmount!
-  [{element   :element
+  [{element      :element
     root-element :root-element
-    on-resize :on-resize}]
+    on-resize    :on-resize}]
   (when (.-_erd element)
     (if (= root-element element)
       (let [shrink (get-shrink-element! element)
@@ -227,7 +227,7 @@
    :get-instance (fn [{on-state-changed :on-state-changed
                        dimension        :dimension
                        should-update?   :should-update?
-                       root-element :root-element}]
+                       root-element     :root-element}]
                    (let [should-update? (or should-update? (fn [] true))
                          state-atom (atom {:width  nil
                                            :height nil})
@@ -252,6 +252,6 @@
                                                                                       :height (.-offsetHeight element)})))
                                                     (on-state-changed))})
                       :will-unmount (fn [{element :element}]
-                                      (handle-unmount! {:element   element
+                                      (handle-unmount! {:element      element
                                                         :root-element root-element
-                                                   :on-resize on-resize-listener}))}))})
+                                                        :on-resize    on-resize-listener}))}))})
