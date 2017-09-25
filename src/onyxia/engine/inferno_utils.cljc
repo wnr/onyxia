@@ -4,17 +4,17 @@
             [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-events formalize-event-handlers]]))
 
 (defn style->inferno-style
-  "Maps a given style map to a inferno-flavored style map (with camedlcased keys, etc.).
-   See https://facebook.github.io/react/docs/dom-elements.html#style"
+  "Maps a given style map to a inferno-flavored style map (with camedlcased keys, etc.)."
   [style]
   (reduce (fn [inferno-style [key value]]
-            (let [string-key (name key)
-                  string-value (if (number? value)
+            (let [string-value (if (number? value)
                           (str value)
-                          (name value))]
-              (assoc inferno-style string-key string-value)))
+                          (name value))
+                  inferno-key (kebab->camel key)]
+              (assoc inferno-style inferno-key string-value)))
           {}
           style))
+
 
 (defn map-attribute-events [attrs {on-dom-event :on-dom-event}]
   (-> attrs

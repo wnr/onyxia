@@ -1,7 +1,6 @@
 (ns onyxia.engine.react-utils
   (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]
             [ysera.error :refer [error]]
-            ;[camel-snake-kebab.core :refer [->camelCase]]
             [onyxia.attributes-map :refer [kebab->camel]]
             [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-events formalize-event-handlers]]))
 
@@ -121,26 +120,6 @@
                 attrs)))
           attrs
           (keys attrs)))
-
-;(defn formalize-event-handlers
-;  {:test (fn []
-;           (is= (formalize-event-handlers nil) [])
-;           (is= (formalize-event-handlers []) [])
-;           (is= (formalize-event-handlers [:foo]) [[:foo]])
-;           (is= (formalize-event-handlers [{} :foo]) [[{} :foo]])
-;           (is= (formalize-event-handlers +) [+])
-;           (is= (formalize-event-handlers [[:foo]]) [[:foo]])
-;           (is= (formalize-event-handlers [[{} :foo]]) [[{} :foo]])
-;           (is= (formalize-event-handlers [+]) [+]))}
-;  [handlers]
-;  (if (or (and (coll? handlers)
-;               (not (empty? handlers))
-;               (or (map? (first handlers))
-;                   (keyword? (first handlers))))
-;          (and (not (coll? handlers))
-;               (not (nil? handlers))))
-;    [handlers]
-;    (or handlers [])))
 
 (defn map-attribute-events
   [attrs {on-dom-event :on-dom-event}]
