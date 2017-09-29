@@ -1,10 +1,11 @@
 (ns onyxia.engine.inferno-utils
   (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]
             [ysera.error :refer [error]]
+            [onyxia.attributes-map :refer [kebab->camel]]
             [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-events formalize-event-handlers]]))
 
 (defn style->inferno-style
-  "Maps a given style map to a inferno-flavored style map (with camedlcased keys, etc.)."
+  "Maps a given style map to a inferno-flavored style map (with camelcased keys, etc.)."
   [style]
   (reduce (fn [inferno-style [key value]]
             (let [string-value (if (number? value)
@@ -26,6 +27,7 @@
                                                                                  :on-mouse-enter
                                                                                  :on-mouse-leave
                                                                                  :on-mouse-up
+                                                                                 :on-key-down
                                                                                  ]})
       ;(change-attribute {:key     :on-xxx
       ;                   :new-key :onYyy
@@ -50,6 +52,8 @@
   [attrs args]
   (-> attrs
       (change-attribute {:key :class :new-key :className})
+      (change-attribute {:key :for :new-key :htmlFor})
+      (change-attribute {:key :charset :new-key :charSet})
       (map-attribute-events args)
       (change-attribute {:key :style :update style->inferno-style})))
 

@@ -48,12 +48,12 @@
                                                       (and (or (not still-to-initiate-hover) (:still state))
                                                            (:hover-value state))))
                       :element-attribute-modifier (fn [{attributes :attributes}]
-                                                    (when-let [hover-value (:element-hovered-value attributes)]
+                                                    (when (contains? attributes :element-hovered-value)
                                                       (-> attributes
                                                           (dissoc :element-hovered-value)
                                                           (add-event-handler :on-mouse-enter (fn []
                                                                                                (when (should-update?)
-                                                                                                 (swap! state-atom assoc :hover-value hover-value :still false))))
+                                                                                                 (swap! state-atom assoc :hover-value (:element-hovered-value attributes) :still false))))
                                                           (add-event-handler :on-mouse-leave (fn []
                                                                                                (when (should-update?)
                                                                                                  (swap! state-atom assoc :hover-value nil :still false)))))))

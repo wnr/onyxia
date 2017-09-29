@@ -268,7 +268,8 @@
                               (second handler)
                               (first handler))
               handle-fn (get (:events event-handling-definition) handle-fn-key)
-              handle-fn-data (merge (last handler)
+              handle-fn-data (merge (when (not= (last handler) handle-fn-key)
+                                      (last handler))
                                     {:event event})]
           (if (not handle-fn)
             (throw (error (str "Cannot find " handle-fn-key " function in definition " (:name event-handling-definition))))
@@ -287,10 +288,9 @@
   [attributes {view-instance :view-instance}]
   (reduce (fn [attributes input-instance]
             (if-let [element-attribute-modifier (:element-attribute-modifier input-instance)]
-              (do
-                (if-let [modified-attributes (element-attribute-modifier {:attributes attributes})]
-                  modified-attributes
-                  attributes))
+              (if-let [modified-attributes (element-attribute-modifier {:attributes attributes})]
+                modified-attributes
+                attributes)
               attributes))
           attributes
           (get-input-system-instances view-instance)))

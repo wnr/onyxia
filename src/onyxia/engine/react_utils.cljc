@@ -131,12 +131,13 @@
                                           :event     event
                                           :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
     (-> attrs
-        (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [:on-click
+        (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [:on-change
+                                                                                   :on-click
+                                                                                   :on-key-down
                                                                                    :on-mouse-down
                                                                                    :on-mouse-enter
                                                                                    :on-mouse-leave
-                                                                                   :on-mouse-up
-                                                                                   :on-change]})
+                                                                                   :on-mouse-up]})
         (change-attribute {:key     :on-input
                            :new-key :onChange
                            :assoc   (fn [e]
@@ -159,6 +160,8 @@
   [attrs {on-dom-event :on-dom-event :as args}]
   (-> attrs
       (change-attribute {:key :class :new-key :className})
+      (change-attribute {:key :for :new-key :htmlFor})
+      (change-attribute {:key :charset :new-key :charSet})
       (map-attribute-events args)
       (change-attribute {:key :style :update style->react-style})
       (map-svg-attributes)))

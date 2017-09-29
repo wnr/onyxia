@@ -1,4 +1,4 @@
-(defproject onyxia "0.3.0-SNAPSHOT"
+(defproject onyxia "0.3.1-SNAPSHOT"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -10,8 +10,6 @@
 
   :dependencies [[org.clojure/clojure "1.9.0-alpha15"]
                  [org.clojure/clojurescript "1.9.495"]
-                 [org.clojure/core.async "0.3.442"
-                  :exclusions [org.clojure/tools.reader]]
                  [cljsjs/react "15.4.2-2"]
                  [cljsjs/react-dom "15.4.2-2"]
                  [cljsjs/inferno "3.6.4-0"]
@@ -104,7 +102,7 @@
                                   [com.cemerick/piggieback "0.2.1"]
                                   [org.clojure/tools.namespace "0.2.11"]]
                    ;; need to add dev source path here to get user.clj loaded
-                   :source-paths ["src" "dev"]
+                   :source-paths ["src"]
                    ;; for CIDER
                    ;; :plugins [[cider/cider-nrepl "0.12.0"]]
                    :repl-options {; for nREPL dev you really need to limit output
