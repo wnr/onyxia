@@ -15,7 +15,7 @@
                  [cljsjs/inferno "3.6.4-0"]
                  [ysera "1.0.3"]]
 
-  :plugins [[lein-figwheel "0.5.9"]
+  :plugins [[lein-figwheel "0.5.14"]
             [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]]
 
   :source-paths ["src"]

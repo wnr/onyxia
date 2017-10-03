@@ -86,17 +86,17 @@
   {:pre [view-instance on-state-changed]}
   (let [definition (get-definition view-instance)
         input-definitions (get-input-definitions view-instance)]
-    (set-input-system-instances-data! view-instance (reduce-kv (fn [inputs-state input-name input-options]
-                                                                 (let [[input-definition predefined-options] (get-input-definition input-definitions (:name input-options))]
-                                                                   (assoc inputs-state
-                                                                     input-name
-                                                                     {:instance ((:get-instance input-definition)
-                                                                                  (merge predefined-options
-                                                                                         (dissoc input-options :name)
-                                                                                         {:on-state-changed on-state-changed
-                                                                                          :root-element     root-element}))})))
-                                                               {}
-                                                               (:input definition)))))
+    (set-input-system-instances-data! view-instance (reduce (fn [inputs-state input]
+                                                              (let [[input-definition predefined-options] (get-input-definition input-definitions (:name input))]
+                                                                (assoc inputs-state
+                                                                  (:input-key input)
+                                                                  {:instance ((:get-instance input-definition)
+                                                                               (merge predefined-options
+                                                                                      (dissoc input :name :input-key)
+                                                                                      {:on-state-changed on-state-changed
+                                                                                       :root-element     root-element}))})))
+                                                            {}
+                                                            (:input definition)))))
 
 (defn all-input-system-instances-ready?
   [view-instance]

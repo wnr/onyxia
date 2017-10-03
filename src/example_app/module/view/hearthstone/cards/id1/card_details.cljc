@@ -17,8 +17,9 @@
 
 (def view-definition
   {:name              "view.hearthstone.cards.id1/card-details"
-   :input             {:size {:name      "parent-size"
-                              :dimension :width}}
+   :input             [{:name      "parent-size"
+                        :dimension :width
+                        :input-key :size}]
    :get-initial-state create-state
    :output            [{:name      "modal"
                         :get-modal (fn [{state :view-state

@@ -63,8 +63,10 @@
 
 (def table
   {:name   "view.hearthstone.cards.id1/table"
-   :input  {:hovered-id {:name "element-hovered"}
-            :active-id  {:name "element-active"}}
+   :input  [{:name      "element-hovered"
+             :input-key :hovered-id}
+            {:name      "element-active"
+             :input-key :active-id}]
    :render (fn [{thead      :thead
                  tbody      :tbody
                  hovered-id :hovered-id
@@ -105,15 +107,16 @@
 
 (def view-definition
   {:name              "view.hearthstone.cards.id1/cards-table"
-   :input             {:size {:name      "parent-size"
-                              :dimension :width}}
+   :input             [{:name      "parent-size"
+                        :dimension :width
+                        :input-key :size}]
    :get-initial-state create-state
    :events            {:on-row-click (fn [view-state {card-id :card-id}]
                                        (toggle-expand-card-detail view-state card-id))}
    :render            (fn [{size       :size
                             view-state :view-state}]
                         [:div
-                         [:h1 (str size)]
+                         [:h1 (str (:width size))]
                          [table
                           {:thead [[:th {:style th-style} "Name"]
                                    [:th {:style th-style} "Race"]
