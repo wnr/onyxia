@@ -51,8 +51,7 @@
                                                                (this-as component
                                                                  (let [view-instance (aget component "viewInstance")]
                                                                    (when (vi/all-input-system-instances-ready? view-instance)
-                                                                     (create-react-element ((:render definition)
-                                                                                             (vi/get-view-input view-instance))
+                                                                     (create-react-element (vi/render! view-instance)
                                                                                            {:on-dom-event        (fn [data]
                                                                                                                    (vi/handle-dom-event view-instance data))
                                                                                             :input-definitions   input-definitions

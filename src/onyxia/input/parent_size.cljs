@@ -232,7 +232,9 @@
                          state-atom (atom {:width  nil
                                            :height nil})
                          on-resize-listener (fn [{width :width height :height}]
-                                              (when (should-update?)
+                                              (when (and (should-update?)
+                                                         (or (not= width (:width @state-atom))
+                                                             (not= height (:height @state-atom))))
                                                 (swap! state-atom (fn [state]
                                                                     (merge state {:width  width
                                                                                   :height height})))

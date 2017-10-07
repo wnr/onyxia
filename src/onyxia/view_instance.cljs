@@ -10,17 +10,19 @@
     output-definitions  :output-definitions
     ancestor-views-data :ancestor-views-data
     render!             :render!}]
-  (atom {:definition           definition
-         :input-definitions    (formalize-input-definitions input-definitions)
-         :output-definitions   (formalize-output-definitions output-definitions)
-         :ancestor-views-data  ancestor-views-data
-         :render!              render!
-         :input-instances-data nil
-         :parent-element       nil
-         :parent-input         nil
-         :mounted              false
-         :has-been-mounted     false
-         :id                   (str (js/Math.random))}))
+  (atom {:definition               definition
+         :input-definitions        (formalize-input-definitions input-definitions)
+         :output-definitions       (formalize-output-definitions output-definitions)
+         :ancestor-views-data      ancestor-views-data
+         :render!                  render!
+         :input-instances-data     nil
+         :parent-element           nil
+         :parent-input             nil
+         :mounted                  false
+         :has-been-mounted         false
+         :last-rendered-view-input nil
+         :current-view-input       nil
+         :id                       (str (js/Math.random))}))
 
 (defn get-id
   [view-instance]
@@ -122,15 +124,6 @@
   (let [definition (get-definition view-instance)]
     (set-view-state-atom! view-instance (atom (when (:get-initial-state definition)
                                                 ((:get-initial-state definition)))))))
-
-(defn set-parent-input!
-  [view-instance parent-input]
-  (swap! view-instance assoc :parent-input parent-input))
-
-(defn get-parent-input
-  [view-instance]
-  (:parent-input (deref view-instance)))
-
 (defn set-parent-element!
   [view-instance parent-element]
   (swap! view-instance assoc :parent-element parent-element))
@@ -159,7 +152,19 @@
   [view-instance]
   (:render! (deref view-instance)))
 
-(defn get-view-input
+(defn set-last-rendered-input
+  [view-instance input]
+  (swap! view-instance assoc :last-rendered-view-input input))
+
+(defn get-last-rendered-view-input
+  [view-instance]
+  (:last-rendered-view-input (deref view-instance)))
+
+(defn get-parent-input
+  [view-instance]
+  (:parent-input (deref view-instance)))
+
+(defn compute-view-input
   [view-instance]
   (reduce-kv (fn [view-input input-name {instance :instance}]
                (assoc view-input
@@ -169,6 +174,21 @@
                     {:view-state (deref (get-view-state-atom view-instance))})
              (get-input-system-instances-data view-instance)))
 
+(defn get-view-input
+  [view-instance]
+  (:current-view-input (deref view-instance)))
+
+(defn set-view-input!
+  [view-instance view-input]
+  (swap! view-instance assoc :current-view-input view-input))
+
+(defn set-parent-input!
+  [view-instance parent-input]
+  (when (not= parent-input
+              (get-parent-input view-instance))
+    (swap! view-instance assoc :parent-input parent-input)
+    (set-view-input! view-instance (compute-view-input view-instance))))
+
 (defn should-render?
   [view-instance]
   (and (or (mounted? view-instance)
@@ -177,7 +197,9 @@
          (let [should-render?-fn (:should-render? definition)]
            (if should-render?-fn
              (should-render?-fn (get-view-input view-instance))
-             true)))))
+             true)))
+       (not= (get-last-rendered-view-input view-instance)
+             (get-view-input view-instance))))
 
 (defn handle-output-systems!
   [view-instance]
@@ -203,21 +225,32 @@
   [view-instance {parent-input     :parent-input
                   on-state-changed :on-state-changed
                   root-element     :root-element}]
-  (let [handle-state-change (fn []
-                              (handle-output-systems! view-instance)
-                              (on-state-changed))]
+  (let [handle-possible-state-change (fn []
+                                       (let [view-input (compute-view-input view-instance)]
+                                         (when (not= (get-last-rendered-view-input view-instance)
+                                                     view-input)
+                                           (set-view-input! view-instance view-input)
+                                           (handle-output-systems! view-instance)
+                                           (on-state-changed))))]
     (init-view-state! view-instance)
     (set-parent-input! view-instance parent-input)
-    (init-input-systems! view-instance {:on-state-changed handle-state-change
+    (init-input-systems! view-instance {:on-state-changed handle-possible-state-change
                                         :root-element     root-element})
     (add-watch (get-view-state-atom view-instance)
                :on-state-changed-notifier
-               (fn [_ _ _ _] (handle-state-change)))
+               (fn [_ _ old-value new-value]
+                 (handle-possible-state-change)))
     (add-watch view-instance
                :on-state-changed-notifier
                (fn [_ _ old-value new-value]
                  (when (not= (:parent-input old-value) (:parent-input new-value))
-                   (handle-state-change))))))
+                   (handle-possible-state-change))))))
+
+(defn render! [view-instance]
+  (let [input (get-view-input view-instance)]
+    (set-last-rendered-input view-instance input)
+    ((:render (get-definition view-instance))
+      input)))
 
 (defn did-render!
   [view-instance]
