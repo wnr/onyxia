@@ -131,8 +131,10 @@
                                           :event     event
                                           :handlers  (formalize-event-handlers (get attrs attributes-key))}))]
     (-> attrs
-        (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [:on-change
+        (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [:on-blur
+                                                                                   :on-change
                                                                                    :on-click
+                                                                                   :on-focus
                                                                                    :on-key-down
                                                                                    :on-mouse-down
                                                                                    :on-mouse-enter

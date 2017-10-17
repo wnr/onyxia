@@ -22,7 +22,8 @@
          :has-been-mounted         false
          :last-rendered-view-input nil
          :current-view-input       nil
-         :id                       (str (js/Math.random))}))
+         :id                       (str (js/Math.random))   ; TODO change to counter
+         }))
 
 (defn get-id
   [view-instance]
@@ -213,6 +214,7 @@
                     (merge predefined-options
                            {:view-output         output
                             :view-state          (get-view-input view-instance)
+                            :view-state-atom     (get-view-state-atom view-instance)
                             :render!             (get-render-fn view-instance)
                             :input-definitions   input-definitions
                             :output-definitions  output-definitions
@@ -247,7 +249,8 @@
                    (handle-possible-state-change))))))
 
 (defn render! [view-instance]
-  (let [input (get-view-input view-instance)]
+  (let [input (merge (get-view-input view-instance)
+                     {:view-state-atom (get-view-state-atom view-instance)})]
     (set-last-rendered-input view-instance input)
     ((:render (get-definition view-instance))
       input)))
@@ -258,7 +261,8 @@
     (when-let [did-render-fn (:did-render definition)]
       ;; TODO: Not nice to merge like this. What if some input to this view is called "element"?
       (did-render-fn (merge {:element                (get-parent-element view-instance)
-                             :add-pending-operation! add-pending-operation!}
+                             :add-pending-operation! add-pending-operation!
+                             :view-state-atom (get-view-state-atom view-instance)}
                             (get-view-input view-instance))))))
 
 (defn did-mount!

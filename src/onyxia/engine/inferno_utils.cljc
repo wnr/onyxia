@@ -20,8 +20,10 @@
 (defn map-attribute-events [attrs {on-dom-event :on-dom-event}]
   (-> attrs
       (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [
+                                                                                 :on-blur
                                                                                  :on-change
                                                                                  :on-click
+                                                                                 :on-focus
                                                                                  :on-input
                                                                                  :on-mouse-down
                                                                                  :on-mouse-enter
