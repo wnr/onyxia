@@ -4,6 +4,12 @@
             [onyxia.view-instance-utils :refer [formalize-input-definitions
                                                 formalize-output-definitions]]))
 
+(def system-state-atom (atom (:counter 0)))
+
+(defn generate-new-view-id!
+  []
+  (:counter (swap! system-state-atom update :counter inc)))
+
 (defn create-view-instance
   [{definition          :definition
     input-definitions   :input-definitions
@@ -22,8 +28,7 @@
          :has-been-mounted         false
          :last-rendered-view-input nil
          :current-view-input       nil
-         :id                       (str (js/Math.random))   ; TODO change to counter
-         }))
+         :id                       (generate-new-view-id!)}))
 
 (defn get-id
   [view-instance]
@@ -208,20 +213,18 @@
     (let [definition (get-definition view-instance)
           input-definitions (get-input-definitions view-instance)
           output-definitions (get-output-definitions view-instance)]
-      (reduce (fn [_ output]
-                (let [[output-definition predefined-options] (get-output-definition output-definitions (:name output))]
-                  ((:handle! output-definition)
-                    (merge predefined-options
-                           {:view-output         output
-                            :view-state          (get-view-input view-instance)
-                            :view-state-atom     (get-view-state-atom view-instance)
-                            :render!             (get-render-fn view-instance)
-                            :input-definitions   input-definitions
-                            :output-definitions  output-definitions
-                            :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})
-                            :view-instance-id    (get-id view-instance)}))))
-              nil
-              (:output definition)))))
+      (doseq [output (:output definition)]
+        (let [[output-definition predefined-options] (get-output-definition output-definitions (:name output))]
+          ((:handle! output-definition)
+            (merge predefined-options
+                   {:view-output         output
+                    :view-state          (get-view-input view-instance)
+                    :view-state-atom     (get-view-state-atom view-instance)
+                    :render!             (get-render-fn view-instance)
+                    :input-definitions   input-definitions
+                    :output-definitions  output-definitions
+                    :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})
+                    :view-instance-id    (get-id view-instance)})))))))
 
 (defn will-mount!
   [view-instance {parent-input     :parent-input
@@ -262,7 +265,7 @@
       ;; TODO: Not nice to merge like this. What if some input to this view is called "element"?
       (did-render-fn (merge {:element                (get-parent-element view-instance)
                              :add-pending-operation! add-pending-operation!
-                             :view-state-atom (get-view-state-atom view-instance)}
+                             :view-state-atom        (get-view-state-atom view-instance)}
                             (get-view-input view-instance))))))
 
 (defn did-mount!
@@ -281,7 +284,7 @@
 (defn will-unmount!
   [view-instance]
   ;; TODO: Should probably be signaled to view as well.
-  (set-mounted view-instance true)
+  (set-mounted view-instance false)
   (doseq [input-instances (get-input-system-instances view-instance)]
     (when (:will-unmount input-instances)
       ;; Not adding to a pending operation here, because we do not have control of React/frameworks.
@@ -289,7 +292,14 @@
       ;; TODO: Can we take control over this?
       ((:will-unmount input-instances)
         {;; TODO: Should this be the root element of the view instead?
-         :element (get-parent-element view-instance)}))))
+         :element (get-parent-element view-instance)})))
+  (doseq [output (:output (get-definition view-instance))]
+    (let [[output-definition predefined-options] (get-output-definition (get-output-definitions view-instance) (:name output))]
+      (when (:will-unmount output-definition)
+        ((:will-unmount output-definition)
+          {;; TODO: Should this be the root element of the view instead?
+           :view-instance-id (get-id view-instance)
+           :element          (get-parent-element view-instance)})))))
 
 (defn handle-dom-event
   [view-instance {handlers :handlers

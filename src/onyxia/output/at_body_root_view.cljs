@@ -63,28 +63,35 @@
   (swap! system-atom set-current-view-context nil))
 
 (def definition
-  {:name    "at-body-root-view"
-   :handle! (fn [{view-output         :view-output
-                  view-state          :view-state
-                  render!             :render!
-                  input-definitions   :input-definitions
-                  output-definitions  :output-definitions
-                  ancestor-views-data :ancestor-views-data
-                  view-instance-id    :view-instance-id}]
-              (let [current-view-context (get-current-view-context @system-atom)]
-                (when (or (nil? current-view-context)
-                          (= view-instance-id (:view-instance-id current-view-context)))
-                  ;; If there is no current at-body-root-view, it is free for any view to request one.
-                  ;; If there is an active at-body-root-view, only the view that requested it may remove it.
-                  ;; It might be nice to be able to define custom priority strategies in the future.
-                  (let [at-body-root-view ((:get-view view-output) view-state)]
-                    (if at-body-root-view
-                      (swap! system-atom set-wanted-view-context {:view                at-body-root-view
-                                                                  :render!             render!
-                                                                  :input-definitions   input-definitions
-                                                                  :output-definitions  output-definitions
-                                                                  :ancestor-views-data ancestor-views-data
-                                                                  ;; We add this so that we can make sure that only the view instance that
-                                                                  ;; once added the at-body-root-view may clear it.
-                                                                  :view-instance-id    view-instance-id})
-                      (swap! system-atom clear-wanted-view-context))))))})
+  {:name         "at-body-root-view"
+   :handle!      (fn [{view-output         :view-output
+                       view-state          :view-state
+                       render!             :render!
+                       input-definitions   :input-definitions
+                       output-definitions  :output-definitions
+                       ancestor-views-data :ancestor-views-data
+                       view-instance-id    :view-instance-id}]
+                   (let [current-view-context (get-current-view-context @system-atom)]
+                     (when (or (nil? current-view-context)
+                               (= view-instance-id (:view-instance-id current-view-context)))
+                       ;; If there is no current at-body-root-view, it is free for any view to request one.
+                       ;; If there is an active at-body-root-view, only the view that requested it may remove it.
+                       ;; It might be nice to be able to define custom priority strategies in the future.
+                       (let [at-body-root-view ((:get-view view-output) view-state)]
+                         (if at-body-root-view
+                           (swap! system-atom set-wanted-view-context {:view                at-body-root-view
+                                                                       :render!             render!
+                                                                       :input-definitions   input-definitions
+                                                                       :output-definitions  output-definitions
+                                                                       :ancestor-views-data ancestor-views-data
+                                                                       ;; We add this so that we can make sure that only the view instance that
+                                                                       ;; once added the at-body-root-view may clear it.
+                                                                       :view-instance-id    view-instance-id})
+                           (swap! system-atom clear-wanted-view-context))))))
+   :will-unmount (fn [{view-instance-id :view-instance-id}]
+                   (let [current-view-context (get-current-view-context @system-atom)]
+                     (when (= view-instance-id (:view-instance-id current-view-context))
+                       ;; When the view that currently is the active view context unmounts, we need to remove it as
+                       ;; active view context.
+                       ;; TODO: the handle functions of all other views should be invoked, since another view might want to show something now that there are room.
+                       (swap! system-atom clear-wanted-view-context))))})
