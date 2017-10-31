@@ -158,17 +158,16 @@
                 {:foo      :bar
                  :children [:a :b]})
            (is= (get-view-input [{} :a :b])
-                {:children [:a :b]}))}
+                {:children [:a :b]})
+           (is= (get-view-input [{} [{:a "a"}]])
+                {:children [[{:a "a"}]]}))}
   [view]
-  (let [view-count (count view)
-        attributes (second view)]
-    (if (< view-count 3)
-      (or attributes {})
-      (let [has-attributes? (map? attributes)]
-        (merge (if has-attributes?
-                 attributes
-                 {})
-               (let [children (nthrest view (if has-attributes? 2 1))]
-                 (when children
-                   ;; TODO: What about conflicts with existing input called "children"?
-                   {:children children})))))))
+  (let [attributes (second view)]
+    (let [has-attributes? (map? attributes)]
+      (merge (if has-attributes?
+               attributes
+               {})
+             (let [children (nthrest view (if has-attributes? 2 1))]
+               (when (not (empty? children))
+                 ;; TODO: What about conflicts with existing input called "children"?
+                 {:children children}))))))
