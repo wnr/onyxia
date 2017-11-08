@@ -154,13 +154,18 @@
                 {})
            (is= (get-view-input [{} {:foo :bar}])
                 {:foo :bar})
-           (is= (get-view-input [{} {:foo :bar} :a :b])
+           (is= (get-view-input [{} {:foo :bar} [:div] [:span]])
                 {:foo      :bar
-                 :children [:a :b]})
-           (is= (get-view-input [{} :a :b])
-                {:children [:a :b]})
+                 :children [[:div {:key "0"}] [:span {:key "1"}]]})
+           (is= (get-view-input [{} [:div] [:span]])
+                {:children [[:div {:key "0"}] [:span {:key "1"}]]})
+           (is= (get-view-input [{} [:div] [:span]])
+                {:children [[:div {:key "0"}] [:span {:key "1"}]]})
+           (is= (get-view-input [{} "foo"])
+                {:children ["foo"]})
            (is= (get-view-input [{} [{:a "a"}]])
-                {:children [[{:a "a"}]]}))}
+                {:children [[{:a "a"} {:key "0"}]]})
+           )}
   [view]
   (let [attributes (second view)]
     (let [has-attributes? (map? attributes)]
@@ -170,4 +175,12 @@
              (let [children (nthrest view (if has-attributes? 2 1))]
                (when (not (empty? children))
                  ;; TODO: What about conflicts with existing input called "children"?
-                 {:children children}))))))
+                 {:children (map-indexed (fn [index child]
+                                           (if (or (keyword? (first child))
+                                                   (map? (first child)))
+                                             (let [child (if (map? (second child))
+                                                           child
+                                                           (concat [(first child) {}] (rest child)))]
+                                               (assoc-in (into [] child) [1 :key] (str index)))
+                                             child))
+                                         children)}))))))

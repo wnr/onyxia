@@ -125,7 +125,11 @@
                                               :output-definitions  output-definitions
                                               :ancestor-views-data ancestor-views-data
                                               :root-element        root-element})
-                              #js{:input input}))
+                              (if (and (map? (second vdom-element))
+                                       (:key (second vdom-element)))
+                                #js{:input input
+                                    :key   (:key (second vdom-element))}
+                                #js{:input input})))
 
     ;; A "normal" HTML DOM element.
     (keyword? (first vdom-element))
