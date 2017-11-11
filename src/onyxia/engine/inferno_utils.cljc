@@ -58,18 +58,3 @@
       (change-attribute {:key :charset :new-key :charSet})
       (map-attribute-events args)
       (change-attribute {:key :style :update style->inferno-style})))
-
-
-(defn add-key-attribute
-  {:test (fn []
-           ;; Should add key if present in system options, and not in element attrs.
-           (is= (add-key-attribute [:div {}] "key-value")
-                [:div {:key "key-value"}])
-           ;; Should not override existing key attribute.
-           (is= (map-to-inferno-attributes {:key "b"} {:key "a"})
-                {:key "b"}))}
-  [vdom-element key-value]
-  (update vdom-element 1 (fn [attrs]
-                           (if (contains? attrs :key)
-                             attrs
-                             (assoc attrs :key key-value)))))

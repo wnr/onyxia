@@ -4,8 +4,7 @@
     [cljsjs.inferno.create-element]
     [cljsjs.inferno.component]
     [cljsjs.inferno.create-class]
-    [onyxia.engine.inferno-utils :refer [map-to-inferno-attributes
-                                         add-key-attribute]]
+    [onyxia.engine.inferno-utils :refer [map-to-inferno-attributes]]
     [onyxia.vdom :as vdom]
     [ysera.error :refer [error]]
     [onyxia.view-instance :as vi]
@@ -119,29 +118,24 @@
     (vdom/view? vdom-element)
     (let [view vdom-element
           definition (vdom/get-view-definition view)
-          input (vdom/get-view-input view)]
+          input (second vdom-element)]
       (when-not definition
         (error (str "Unable to find view definition. " view)))
       (js/Inferno.createElement (get-component {:definition          definition
                                                 :input-definitions   input-definitions
                                                 :output-definitions  output-definitions
                                                 :ancestor-views-data ancestor-views-data})
-                                (if (and (map? (second vdom-element))
-                                         (:key (second vdom-element)))
+                                (if-let [key (:key input)]
                                   #js{:input input
-                                      :key   (:key (second vdom-element))}
+                                      :key   key}
                                   #js{:input input})))
 
     ;; A "normal" HTML DOM element.
     (keyword? (first vdom-element))
-    (let [vdom-element (vdom/formalize-element vdom-element)
-          attributes (second vdom-element)
+    (let [attributes (second vdom-element)
           children (nth vdom-element 2)
           inferno-element-args (concat [(name (first vdom-element))
-                                        (clj->js (-> (if view-instance
-                                                       (vi/modify-attributes attributes {:view-instance view-instance})
-                                                       attributes)
-                                                     (map-to-inferno-attributes {:on-dom-event on-dom-event})))]
+                                        (clj->js (map-to-inferno-attributes attributes {:on-dom-event on-dom-event}))]
                                        (clj->js (if (and (= (count children) 1)
                                                          (or (string? (first children))
                                                              (number? (first children))))
@@ -153,14 +147,11 @@
 
     ;; A sequence of elements
     (vdom/element-sequence? vdom-element)
-    (map-indexed (fn [index node]
-                   (let [node (if (vdom/element? node)
-                                (add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
-                                node)]
-                     (create-inferno-element node system-options)))
-                 (vdom/clean-element-sequence vdom-element))
+    (map (fn [node]
+           (create-inferno-element node system-options))
+         vdom-element)
 
-    :default
+    :else
     (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
 
 (defn render!

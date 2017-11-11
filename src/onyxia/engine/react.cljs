@@ -1,7 +1,6 @@
 (ns onyxia.engine.react
   (:require [cljsjs.react.dom]
-            [onyxia.engine.react-utils :refer [map-to-react-attributes
-                                               add-key-attribute]]
+            [onyxia.engine.react-utils :refer [map-to-react-attributes]]
             [onyxia.vdom :as vdom]
             [onyxia.view-instance :as vi]
             [ysera.error :refer [error]]
@@ -100,10 +99,7 @@
                  view-instance       :view-instance         ;; Optional. Needed to activate view-specific input systems. If not present, only standard HTML attributes and such will be processed.
                  root-element        :root-element
                  :as                 system-options}]
-  (ensure-global-react!)
   (cond
-    ;; React.createElement cares about children ordering, so it is important to keep nil children.
-    ;; Otherwise, React won't be able to recognize unaffected children (so it will re-mount all of them).
     (nil? vdom-element)
     nil
 
@@ -117,30 +113,23 @@
     (vdom/view? vdom-element)
     (let [view vdom-element
           definition (vdom/get-view-definition view)
-          input (vdom/get-view-input view)]
-      (when-not definition
-        (error (str "Unable to find view definition. " view)))
+          input (second vdom-element)]
       (js/React.createElement (get-component {:definition          definition
                                               :input-definitions   input-definitions
                                               :output-definitions  output-definitions
                                               :ancestor-views-data ancestor-views-data
                                               :root-element        root-element})
-                              (if (and (map? (second vdom-element))
-                                       (:key (second vdom-element)))
+                              (if-let [key (:key input)]
                                 #js{:input input
-                                    :key   (:key (second vdom-element))}
+                                    :key   key}
                                 #js{:input input})))
 
     ;; A "normal" HTML DOM element.
     (keyword? (first vdom-element))
-    (let [vdom-element (vdom/formalize-element vdom-element)
-          attributes (second vdom-element)
+    (let [attributes (second vdom-element)
           children (nth vdom-element 2)
           react-element-args (concat [(name (first vdom-element))
-                                      (clj->js (-> (if view-instance
-                                                     (vi/modify-attributes attributes {:view-instance view-instance})
-                                                     attributes)
-                                                   (map-to-react-attributes {:on-dom-event on-dom-event})))]
+                                      (clj->js (map-to-react-attributes attributes {:on-dom-event on-dom-event}))]
                                      (clj->js (if (and (= (count children) 1)
                                                        (or (string? (first children))
                                                            (number? (first children))))
@@ -152,14 +141,11 @@
 
     ;; A sequence of elements (that will need to be handled as such for React with keys etc).
     (vdom/element-sequence? vdom-element)
-    (map-indexed (fn [index node]
-                   (let [node (if (vdom/element? node)
-                                (add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
-                                node)]
-                     (create-react-element node system-options)))
-                 (vdom/clean-element-sequence vdom-element))
+    (map (fn [node]
+           (create-react-element node system-options))
+         vdom-element)
 
-    :default
+    :else
     (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
 
 (defn render!

@@ -17,9 +17,20 @@
 
 (defn add-event-handler
   {:test (fn []
-           (is= (add-event-handler {} :on-click :x) {:on-click [:x]})
-           (is= (add-event-handler {:on-click [:x :y]} :on-click :z) {:on-click [:x :y :z]}))}
+           (is= (add-event-handler {} :on-click :x)
+                {:on-click [:x]})
+           (is= (add-event-handler {:on-click :x} :on-click :y)
+                {:on-click [:x :y]})
+           (is= (add-event-handler {:on-click [:x :y]} :on-click :z)
+                {:on-click [:x :y :z]}))}
   [attributes key event-handler]
-  (if-let [existing-value (get attributes key)]
-    (update attributes key conj event-handler)
-    (assoc attributes key [event-handler])))
+  (let [existing-value (get attributes key)]
+    (cond
+      (nil? existing-value)
+      (assoc attributes key [event-handler])
+
+      (sequential? existing-value)
+      (update attributes key conj event-handler)
+
+      :else
+      (assoc attributes key [existing-value event-handler]))))

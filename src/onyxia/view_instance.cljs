@@ -2,7 +2,8 @@
   (:require [ysera.error :refer [error]]
             [onyxia.dom-operator :refer [add-pending-operation!]]
             [onyxia.view-instance-utils :refer [formalize-input-definitions
-                                                formalize-output-definitions]]))
+                                                formalize-output-definitions]]
+            [onyxia.vdom :as vdom]))
 
 (def system-state-atom (atom (:counter 0)))
 
@@ -184,6 +185,10 @@
   [view-instance]
   (:current-view-input (deref view-instance)))
 
+(defn get-view-input-children
+  [view-instance]
+  (:children (get-view-input view-instance)))
+
 (defn set-view-input!
   [view-instance view-input]
   (swap! view-instance assoc :current-view-input view-input))
@@ -251,12 +256,69 @@
                  (when (not= (:parent-input old-value) (:parent-input new-value))
                    (handle-possible-state-change))))))
 
+(defn- modify-attributes
+  [attributes {view-instance :view-instance}]
+  (reduce (fn [attributes input-instance]
+            (if-let [element-attribute-modifier (:element-attribute-modifier input-instance)]
+              (if-let [modified-attributes (element-attribute-modifier {:attributes attributes})]
+                modified-attributes
+                attributes)
+              attributes))
+          attributes
+          (get-input-system-instances view-instance)))
+
+(defn- prepare-element-tree
+  [vdom-element {view-instance :view-instance :as system-options}]
+  (let [vdom-identifier (first vdom-element)]
+    ;(js/console.log "view-input-children" (vi/get-view-input-children view-instance))
+
+    (cond
+      (= vdom-element (get-view-input-children view-instance))
+      vdom-element
+
+      ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
+      (vdom/view? vdom-element)
+      (let [view vdom-element
+            definition (vdom/get-view-definition view)
+            input (-> (vdom/get-view-input view)
+                      (update :children (fn [children]
+                                          (map (fn [child]
+                                                 (prepare-element-tree child system-options))
+                                               children))))]
+        [vdom-identifier input])
+
+      ;; A "normal" HTML DOM element.
+      (keyword? vdom-identifier)
+      (let [vdom-element (vdom/formalize-element vdom-element)
+            attributes (second vdom-element)
+            children (nth vdom-element 2)
+            new-attributes (if view-instance
+                             (modify-attributes attributes {:view-instance view-instance})
+                             attributes)
+            new-children (map (fn [child]
+                                (prepare-element-tree child system-options))
+                              children)]
+        [vdom-identifier new-attributes new-children])
+
+      ;; A sequence of elements (that will need to be handled as such with keys etc).
+      (vdom/element-sequence? vdom-element)
+      (map-indexed (fn [index node]
+                     (let [node (if (vdom/element? node)
+                                  (vdom/add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
+                                  node)]
+                       (prepare-element-tree node system-options)))
+                   (vdom/clean-element-sequence vdom-element))
+
+      :else
+      vdom-element)))
+
 (defn render! [view-instance]
   (let [input (merge (get-view-input view-instance)
                      {:view-state-atom (get-view-state-atom view-instance)})]
     (set-last-rendered-input view-instance input)
-    ((:render (get-definition view-instance))
-      input)))
+    (let [vdom-element ((:render (get-definition view-instance))
+                         input)]
+      (prepare-element-tree vdom-element {:view-instance view-instance}))))
 
 (defn did-render!
   [view-instance]
@@ -330,14 +392,3 @@
                                                   state))))))
         ;; A raw function has been passed as handler, simply invoke it.
         (handler event)))))
-
-(defn modify-attributes
-  [attributes {view-instance :view-instance}]
-  (reduce (fn [attributes input-instance]
-            (if-let [element-attribute-modifier (:element-attribute-modifier input-instance)]
-              (if-let [modified-attributes (element-attribute-modifier {:attributes attributes})]
-                modified-attributes
-                attributes)
-              attributes))
-          attributes
-          (get-input-system-instances view-instance)))
