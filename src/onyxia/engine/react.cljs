@@ -158,9 +158,10 @@
   (ensure-global-react!)
   (if (nil? view)
     (js/ReactDOM.unmountComponentAtNode target-element)
-    (let [react-element (create-react-element view {:input-definitions   input-definitions
-                                                    :output-definitions  output-definitions
-                                                    :on-dom-event        (fn [_])
-                                                    :ancestor-views-data ancestor-views-data
-                                                    :root-element        target-element})]
+    (let [react-element (-> (vi/prepare-element-tree view {})
+                            (create-react-element {:input-definitions   input-definitions
+                                                   :output-definitions  output-definitions
+                                                   :on-dom-event        (fn [_])
+                                                   :ancestor-views-data ancestor-views-data
+                                                   :root-element        target-element}))]
       (js/ReactDOM.render react-element target-element))))

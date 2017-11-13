@@ -104,10 +104,11 @@
 (defn element?
   {:test (fn []
            (is (element? [:div]))
+           (is-not (element? 0))
            (is-not (element? "hello"))
            (is-not (element? ["hello"])))}
   [node]
-  (keyword? (first node)))
+  (keyword? (get node 0)))
 
 (defn element-sequence?
   {:test (fn []
@@ -117,6 +118,7 @@
            (is (element-sequence? ["test"]))
            (is (element-sequence? [0]))
            (is (element-sequence? [nil]))
+           (is-not (element-sequence? 0))
            (is-not (element-sequence? [:div]))
            (is-not (element-sequence? "test")))}
   [node]
@@ -129,9 +131,11 @@
            (is (view? {:name "view-definition"}))
            (is (view? [{:name "view-definition"}]))
            (is (view? [{:name "view-definition"} {:foo :bar} "child"]))
+           (is-not (view? 0))
+           (is-not (view? "a string"))
            (is-not (view? [:div])))}
   [vdom-element]
-  (or (map? (first vdom-element)) (map? vdom-element)))
+  (or (map? (get vdom-element 0)) (map? vdom-element)))
 
 (defn get-view-definition
   {:test (fn []

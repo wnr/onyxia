@@ -269,55 +269,52 @@
 
 (defn- prepare-element-tree
   [vdom-element {view-instance :view-instance :as system-options}]
-  (let [vdom-identifier (first vdom-element)]
-    ;(js/console.log "view-input-children" (vi/get-view-input-children view-instance))
+  (cond
+    (and view-instance
+         (= vdom-element (get-view-input-children view-instance)))
+    vdom-element
 
-    (cond
-      (= vdom-element (get-view-input-children view-instance))
-      vdom-element
+    ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
+    (vdom/view? vdom-element)
+    (let [view vdom-element
+          input (-> (vdom/get-view-input view)
+                    (update :children (fn [children]
+                                        (map (fn [child]
+                                               (prepare-element-tree child system-options))
+                                             children))))]
+      [(first vdom-element) input])
 
-      ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
-      (vdom/view? vdom-element)
-      (let [view vdom-element
-            definition (vdom/get-view-definition view)
-            input (-> (vdom/get-view-input view)
-                      (update :children (fn [children]
-                                          (map (fn [child]
-                                                 (prepare-element-tree child system-options))
-                                               children))))]
-        [vdom-identifier input])
+    ;; A "normal" HTML DOM element.
+    (vdom/element? vdom-element)
+    (let [vdom-element (vdom/formalize-element vdom-element)
+          attributes (second vdom-element)
+          children (nth vdom-element 2)
+          new-attributes (if view-instance
+                           (modify-attributes attributes {:view-instance view-instance})
+                           attributes)
+          new-children (map (fn [child]
+                              (prepare-element-tree child system-options))
+                            children)]
+      [(first vdom-element) new-attributes new-children])
 
-      ;; A "normal" HTML DOM element.
-      (keyword? vdom-identifier)
-      (let [vdom-element (vdom/formalize-element vdom-element)
-            attributes (second vdom-element)
-            children (nth vdom-element 2)
-            new-attributes (if view-instance
-                             (modify-attributes attributes {:view-instance view-instance})
-                             attributes)
-            new-children (map (fn [child]
-                                (prepare-element-tree child system-options))
-                              children)]
-        [vdom-identifier new-attributes new-children])
+    ;; A sequence of elements (that will need to be handled as such with keys etc).
+    (vdom/element-sequence? vdom-element)
+    (map-indexed (fn [index node]
+                   (let [node (if (vdom/element? node)
+                                (vdom/add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
+                                node)]
+                     (prepare-element-tree node system-options)))
+                 (vdom/clean-element-sequence vdom-element))
 
-      ;; A sequence of elements (that will need to be handled as such with keys etc).
-      (vdom/element-sequence? vdom-element)
-      (map-indexed (fn [index node]
-                     (let [node (if (vdom/element? node)
-                                  (vdom/add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
-                                  node)]
-                       (prepare-element-tree node system-options)))
-                   (vdom/clean-element-sequence vdom-element))
-
-      :else
-      vdom-element)))
+    :else
+    vdom-element))
 
 (defn render! [view-instance]
   (let [input (merge (get-view-input view-instance)
                      {:view-state-atom (get-view-state-atom view-instance)})]
     (set-last-rendered-input view-instance input)
-    (let [vdom-element ((:render (get-definition view-instance))
-                         input)]
+    (let [definition (get-definition view-instance)
+          vdom-element ((:render definition) input)]
       (prepare-element-tree vdom-element {:view-instance view-instance}))))
 
 (defn did-render!

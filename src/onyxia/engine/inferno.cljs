@@ -164,8 +164,9 @@
   (ensure-global-inferno!)
   (if (nil? view)
     (js/Inferno.render nil target-element)
-    (let [inferno-element (create-inferno-element view {:input-definitions   input-definitions
-                                                        :output-definitions  output-definitions
-                                                        :on-dom-event        (fn [_])
-                                                        :ancestor-views-data ancestor-views-data})]
+    (let [inferno-element (-> (vi/prepare-element-tree view {})
+                              (create-inferno-element {:input-definitions   input-definitions
+                                                       :output-definitions  output-definitions
+                                                       :on-dom-event        (fn [_])
+                                                       :ancestor-views-data ancestor-views-data}))]
       (js/Inferno.render inferno-element target-element))))
