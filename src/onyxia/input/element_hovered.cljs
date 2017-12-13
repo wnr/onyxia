@@ -20,6 +20,11 @@
                          on-still-timeout (fn []
                                             (when (should-update?)
                                               (swap! state-atom assoc :still true :still-timeout-id nil)))
+                         get-value (fn [state]
+                                     (if-let [value (and (or (not still-to-initiate-hover) (:still state))
+                                                         (:hover-value state))]
+                                       value
+                                       nil))
                          mouse-position-instance (when still-to-initiate-hover
                                                    ((:get-instance mouse-position-input-definition)
                                                      {:on-state-changed (fn []
@@ -32,21 +37,10 @@
                                                                               (when (should-update?)
                                                                                 (swap! state-atom assoc :still false :still-timeout-id (js/setTimeout on-still-timeout 100))))))}))]
                      (add-watch state-atom :state-change-notifier (fn [_ _ old-state new-state]
-                                                                    (let [hover-changed (not= (:hover-value old-state) (:hover-value new-state))]
-                                                                      (cond
-                                                                        still-to-initiate-hover
-                                                                        (when (or hover-changed
-                                                                                  (not= (:still old-state) (:still new-state)))
-                                                                          (on-state-changed))
-
-                                                                        :else
-                                                                        (when hover-changed
-                                                                          (on-state-changed))))))
+                                                                    (when (not= (get-value old-state) (get-value new-state))
+                                                                      (on-state-changed))))
                      {:ready?                     (fn [] true)
-                      :get-value                  (fn []
-                                                    (let [state (deref state-atom)]
-                                                      (and (or (not still-to-initiate-hover) (:still state))
-                                                           (:hover-value state))))
+                      :get-value                  (fn [] (get-value (deref state-atom)))
                       :element-attribute-modifier (fn [{attributes :attributes}]
                                                     (when (contains? attributes :element-hovered-value)
                                                       (-> attributes
