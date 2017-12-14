@@ -21,10 +21,9 @@
                                             (when (should-update?)
                                               (swap! state-atom assoc :still true :still-timeout-id nil)))
                          get-value (fn [state]
-                                     (if-let [value (and (or (not still-to-initiate-hover) (:still state))
-                                                         (:hover-value state))]
-                                       value
-                                       nil))
+                                     (when-let [value (and (or (not still-to-initiate-hover) (:still state))
+                                                           (:hover-value state))]
+                                       value))
                          mouse-position-instance (when still-to-initiate-hover
                                                    ((:get-instance mouse-position-input-definition)
                                                      {:on-state-changed (fn []
