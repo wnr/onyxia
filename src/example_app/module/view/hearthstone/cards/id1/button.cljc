@@ -46,8 +46,10 @@
 
 (def button-view
   {:name   "button"
-   :input  {:hovered {:name "element-hovered"}
-            :active  {:name "element-active"}}
+   :input  [{:name      "element-hovered"
+             :input-key :hovered}
+            {:name      "element-active"
+             :input-key :active}]
    :render (fn [{hovered  :hovered
                  active   :active
                  children :children

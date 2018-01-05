@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/style.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <div id="app">
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.2/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.6.1/react-dom.js"></script>
+    <script type="text/javascript">
+        "use strict";
+
+        var rows = [1, 2, 3];
+
+        function Paj(props) {
+            console.log(props.children);
+            return React.createElement(
+                "b",
+                null,
+                props.children
+            );
+        }
+
+        function Lol(props) {
+            console.log(props.children);
+            return React.createElement(
+                Paj,
+                null,
+                props.children
+            );
+        }
+
+        function Hello() {
+            return React.createElement(
+                "div",
+                null,
+                React.createElement(
+                    "table",
+                    null
+                ),
+                React.createElement("img", { src: "lol" }),
+                React.createElement(
+                    Lol,
+                    null,
+                    React.createElement("span", null),
+                    React.createElement("span", null)
+                )
+            );
+        }
+
+        ReactDOM.render(React.createElement(Hello, null), document.getElementById('app'));
+    </script>
+  </body>
+</html>

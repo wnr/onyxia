@@ -29,8 +29,8 @@
 
 (def definition
   {:name    "modal"
-   :handle! (fn [{at-body-root-view :at-body-root-view-output-definition :as args}]
-              ((:handle! at-body-root-view)
+   :handle! (fn [{at-root-view :at-root-view-output-definition :as args}]
+              ((:handle! at-root-view)
                 (update args :view-output (fn [view-output]
                                             (-> view-output
                                                 (assoc :get-view (fn [view-state]
