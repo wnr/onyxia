@@ -8,12 +8,12 @@
 
   :min-lein-version "2.7.1"
 
-  :dependencies [[org.clojure/clojure "1.9.0-alpha15"]
-                 [org.clojure/clojurescript "1.9.495"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
+                 [org.clojure/clojurescript "1.9.946"]
                  [cljsjs/react "15.4.2-2"]
                  [cljsjs/react-dom "15.4.2-2"]
                  [cljsjs/inferno "3.6.4-0"]
-                 [ysera "1.0.3"]]
+                 [ysera "1.1.0"]]
 
   :plugins [[lein-figwheel "0.5.14"]
             [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]]
@@ -44,7 +44,9 @@
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
                            :preloads [devtools.preload]
-                           :optimizations :none}}
+                           :optimizations :none
+                           :npm-deps {:ua-parser-js "0.7.17"}
+                           :install-deps true}}
                ;; This next build is an compressed minified build for
                ;; production. You can build this with:
                ;; lein cljsbuild once min
@@ -97,9 +99,9 @@
   ;; https://github.com/bhauman/lein-figwheel/wiki/Using-the-Figwheel-REPL-within-NRepl
 
 
-  :profiles {:dev {:dependencies [[binaryage/devtools "0.9.2"]
-                                  [figwheel-sidecar "0.5.9"]
-                                  [com.cemerick/piggieback "0.2.1"]
+  :profiles {:dev {:dependencies [[binaryage/devtools "0.9.8"]
+                                  [figwheel-sidecar "0.5.14"]
+                                  [com.cemerick/piggieback "0.2.2"]
                                   [org.clojure/tools.namespace "0.2.11"]]
                    ;; need to add dev source path here to get user.clj loaded
                    :source-paths ["src"]
