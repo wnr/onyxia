@@ -10,8 +10,6 @@
     (or (= device-type "mobile")
         (= device-type "tablet"))))
 
-(js/alert (disable-system?))
-
 (def definition
   {:name         "element-active"
    :get-instance (fn [{on-state-changed :on-state-changed
