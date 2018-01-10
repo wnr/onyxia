@@ -16,3 +16,4 @@ pom.xml.asc
 checkouts/
 *.iml
 .idea
+/node_modules/
