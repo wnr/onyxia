@@ -247,12 +247,12 @@
                                       (install! {:element   element
                                                  :on-resize (fn [x]
                                                               (on-resize-listener x))})
-                                      {:operation :read-dom
-                                       :execute!  (fn []
-                                                    (swap! state-atom (fn [state]
-                                                                        (merge state {:width  (.-offsetWidth element)
-                                                                                      :height (.-offsetHeight element)})))
-                                                    (on-state-changed))})
+                                      (add-pending-operation! {:operation :read-dom
+                                                               :execute!  (fn []
+                                                                            (swap! state-atom (fn [state]
+                                                                                                (merge state {:width  (.-offsetWidth element)
+                                                                                                              :height (.-offsetHeight element)})))
+                                                                            (on-state-changed))}))
                       :will-unmount (fn [{element :element}]
                                       (handle-unmount! {:element      element
                                                         :root-element root-element
