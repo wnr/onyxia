@@ -1,11 +1,12 @@
 (ns example-app.main
   (:require [ysera.error :refer [error]]
             [onyxia.engine.inferno :refer [render!]]
-            ;[onyxia.engine.react :refer [render!]]
+    ;[onyxia.engine.react :refer [render!]]
             [onyxia.input.parent-size]
             [onyxia.input.element-hovered]
             [onyxia.input.element-active]
             [onyxia.input.mouse-position]
+            [onyxia.input.animation]
             [onyxia.output.modal]
             [onyxia.output.at-root-view]
             [example-app.app :refer [app-view-definition]]))
@@ -18,7 +19,8 @@
   (render!
     {:view               [app-view-definition]
      :target-element     (js/document.getElementById "app")
-     :input-definitions  {"parent-size"     [onyxia.input.parent-size/definition]
+     :input-definitions  {"animation"       [onyxia.input.animation/definition]
+                          "parent-size"     [onyxia.input.parent-size/definition]
                           "element-hovered" [onyxia.input.element-hovered/definition {:mouse-position-input-definition onyxia.input.mouse-position/definition}]
                           "element-active"  [onyxia.input.element-active/definition]}
      :output-definitions {"modal" [onyxia.output.modal/definition {:at-root-view-output-definition onyxia.output.at-root-view/definition
