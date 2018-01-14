@@ -81,7 +81,9 @@
                                     :onStateChanged            (fn []
                                                                  (this-as component
                                                                    (let [view-instance (aget component "viewInstance")]
-                                                                     (.setState component {:view-input (vi/get-view-input view-instance)})))
+                                                                     ;; We actually do not need to store any data in the component state.
+                                                                     ;; But we need to call it in order to get a render.
+                                                                     (.setState component nil)))
                                                                  nil)})))
 
 (defn- get-component
