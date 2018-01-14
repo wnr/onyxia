@@ -53,8 +53,11 @@
                 {"textAnchor" "foo" "xlinkHref" "bar"}))}
   [attrs args]
   (-> attrs
-      (change-attribute {:key :class :new-key :className})
-      (change-attribute {:key :for :new-key :htmlFor})
-      (change-attribute {:key :charset :new-key :charSet})
+      ;(change-attribute {:key :class :new-key :className})
+      ;(change-attribute {:key :for :new-key :htmlFor})
+      ;(change-attribute {:key :charset :new-key :charSet})
       (map-attribute-events args)
-      (change-attribute {:key :style :update style->inferno-style})))
+      ;; Seems like Inferno supports snake-case styles. Or does it just pass it along to the DOM and modern browsers just happen to support it?
+      ;; anyway, should not do this very expensive operation if not really needed (old browsers)...
+      ;(change-attribute {:key :style :update style->inferno-style})
+      ))
