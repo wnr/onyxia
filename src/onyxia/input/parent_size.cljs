@@ -240,7 +240,7 @@
                                                                                   :height height})))
                                                 (on-state-changed)))]
                      {:ready?       (fn []
-                                      (not (nil? (get-size-input-value @state-atom dimension))))
+                                      (not (nil? (get (get-size-input-value @state-atom dimension) dimension))))
                       :get-value    (fn []
                                       (get-size-input-value @state-atom dimension))
                       :did-mount    (fn [{element :element}]
