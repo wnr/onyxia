@@ -1,15 +1,11 @@
 (ns onyxia.input.element-hovered
   (:require [onyxia.attributes :refer [add-event-handler]]
             [ysera.error :refer [error]]
-            ["ua-parser-js" :as ua-parser]))
-
-(def ua (ua-parser))
+            [goog.labs.userAgent.device :as device]))
 
 (defn disable-system?
   []
-  (let [device-type (aget ua "device" "type")]
-    (or (= device-type "mobile")
-        (= device-type "tablet"))))
+  (not (device/isDesktop)))
 
 (def definition
   {:name         "element-hovered"
@@ -23,8 +19,11 @@
                    (when (and (not still-to-initiate-hover) still-to-remain-hovered)
                      (error ":still-to-remain-hovered cannot be true without :still-to-initiate-hover being true. That doesn't make sense."))
                    (if (disable-system?)
-                     {:ready? (fn [] true)
-                      :get-value (fn [] nil)}
+                     {:ready?                     (fn [] true)
+                      :get-value                  (fn [] nil)
+                      :element-attribute-modifier (fn [{attributes :attributes}]
+                                                    (when (contains? attributes :element-hovered-value)
+                                                      (dissoc attributes :element-hovered-value)))}
                      (let [should-update? (or should-update? (fn [] true))
                            state-atom (atom {:hover-value      nil
                                              :still            false

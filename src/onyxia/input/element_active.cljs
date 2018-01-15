@@ -1,24 +1,21 @@
 (ns onyxia.input.element-active
   (:require [onyxia.attributes :refer [add-event-handler]]
-            ["ua-parser-js" :as ua-parser]))
-
-(def ua (ua-parser))
+            [goog.labs.userAgent.device :as device]))
 
 (defn disable-system?
   []
-  (let [device-type (aget ua "device" "type")]
-    (or (= device-type "mobile")
-        (= device-type "tablet"))))
-
-(js/alert (disable-system?))
+  (not (device/isDesktop)))
 
 (def definition
   {:name         "element-active"
    :get-instance (fn [{on-state-changed :on-state-changed
                        should-update?   :should-update?}]
                    (if (disable-system?)
-                     {:ready?    (fn [] true)
-                      :get-value (fn [] nil)}
+                     {:ready?                     (fn [] true)
+                      :get-value                  (fn [] nil)
+                      :element-attribute-modifier (fn [{attributes :attributes}]
+                                                    (when-let [element-active-id (:element-active-value attributes)]
+                                                      (dissoc attributes :element-active-value)))}
                      (let [should-update? (or should-update? (fn [] true))
                            state-atom (atom {:active nil})]
                        {:ready?                     (fn [] true)

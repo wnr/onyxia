@@ -44,9 +44,7 @@
                            ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
                            ;; https://github.com/binaryage/cljs-devtools
                            :preloads [devtools.preload]
-                           :optimizations :none
-                           :npm-deps {:ua-parser-js "0.7.17"}
-                           :install-deps true}}
+                           :optimizations :none}}
                ;; This next build is an compressed minified build for
                ;; production. You can build this with:
                ;; lein cljsbuild once min
