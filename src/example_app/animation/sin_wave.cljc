@@ -1,5 +1,5 @@
 (ns example-app.animation.sin-wave
-  (:require [ysera.numeric :refer [sin floor]]))
+  (:require [ysera.math :refer [sin floor]]))
 
 (def bar-count 128)
 
