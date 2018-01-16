@@ -24,8 +24,7 @@
   (when (not= (:status @pending-operations-atom) :idle)
     (error "Cannot queue unless status idle."))
   (swap! pending-operations-atom assoc :status :execution-queued)
-  (js/requestAnimationFrame (fn []
-                              (execute-pending-operations!))))
+  (js/requestAnimationFrame execute-pending-operations!))
 
 (defn add-pending-operation! [operation]
   (let [status (:status (swap! pending-operations-atom (fn [pending-operations]
