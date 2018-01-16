@@ -365,7 +365,9 @@
     (set-last-rendered-input view-instance input)
     (let [definition (get-definition view-instance)
           vdom-element ((:render definition) input)]
-      (prepare-element-tree vdom-element {:view-instance view-instance}))))
+      vdom-element
+      ;;(prepare-element-tree vdom-element {:view-instance view-instance})
+      )))
 
 (defn did-render!
   [view-instance]
