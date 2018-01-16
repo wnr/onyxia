@@ -339,7 +339,7 @@
     (vdom/element-sequence? vdom-element)
     (map-indexed (fn [index node]
                    (let [node (if (vdom/element? node)
-                                (vdom/add-key-attribute (vdom/ensure-attributes-map node) (str (hash node) "-" index))
+                                (vdom/ensure-attributes-map node)
                                 node)]
                      (prepare-element-tree node system-options)))
                  (vdom/clean-element-sequence vdom-element))

@@ -160,15 +160,15 @@
                 {:foo :bar})
            (is= (get-view-input [{} {:foo :bar} [:div] [:span]])
                 {:foo      :bar
-                 :children [[:div {:key "0"}] [:span {:key "1"}]]})
+                 :children [[:div {}] [:span {}]]})
            (is= (get-view-input [{} [:div] [:span]])
-                {:children [[:div {:key "0"}] [:span {:key "1"}]]})
+                {:children [[:div {}] [:span {}]]})
            (is= (get-view-input [{} [:div] [:span]])
-                {:children [[:div {:key "0"}] [:span {:key "1"}]]})
+                {:children [[:div {}] [:span {}]]})
            (is= (get-view-input [{} "foo"])
                 {:children ["foo"]})
            (is= (get-view-input [{} [{:a "a"}]])
-                {:children [[{:a "a"} {:key "0"}]]}))}
+                {:children [[{:a "a"} {}]]}))}
   [view]
   (let [attributes (second view)]
     (let [has-attributes? (map? attributes)]
@@ -178,26 +178,11 @@
              (let [children (nthrest view (if has-attributes? 2 1))]
                (when (not (empty? children))
                  ;; TODO: What about conflicts with existing input called "children"?
-                 {:children (map-indexed (fn [index child]
-                                           (if (or (keyword? (first child))
-                                                   (map? (first child)))
-                                             (let [child (if (map? (second child))
-                                                           child
-                                                           (concat [(first child) {}] (rest child)))]
-                                               (assoc-in (into [] child) [1 :key] (str index)))
-                                             child))
-                                         children)}))))))
-
-(defn add-key-attribute
-  {:test (fn []
-           ;; Should add key if present in system options, and not in element attrs.
-           (is= (add-key-attribute [:div {}] "key-value")
-                [:div {:key "key-value"}])
-           ;; Should not override existing key attribute.
-           (is= (add-key-attribute [:div {:key "b"}] {:key "a"})
-                [:div {:key "b"}]))}
-  [vdom-element key-value]
-  (update vdom-element 1 (fn [attrs]
-                           (if (contains? attrs :key)
-                             attrs
-                             (assoc attrs :key key-value)))))
+                 {:children (map (fn [child]
+                                   (if (or (keyword? (first child))
+                                           (map? (first child)))
+                                     (if (map? (second child))
+                                       child
+                                       (concat [(first child) {}] (rest child)))
+                                     child))
+                                 children)}))))))
