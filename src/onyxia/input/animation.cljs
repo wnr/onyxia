@@ -4,7 +4,8 @@
 (def definition
   {:name         "animation"
    :get-instance (fn [{on-state-changed :on-state-changed
-                       should-update?   :should-update?}]
+                       should-update?   :should-update?
+                       input-key        :input-key}]
                    (let [should-update? (or should-update? (fn [] true))
                          state-atom (atom {:tick             0
                                            :last-tick        nil
@@ -13,13 +14,13 @@
                       :get-input  (fn []
                                     (let [{tick             :tick
                                            last-render-time :last-render-time} (deref state-atom)]
-                                      {:tick          tick
-                                       :event         (if (= tick 0)
-                                                        :start
-                                                        :step)
-                                       :delta-time-ms (if (= tick 0)
-                                                        nil
-                                                        (- (js/Date.now) last-render-time))}))
+                                      {input-key {:tick          tick
+                                                  :event         (if (= tick 0)
+                                                                   :start
+                                                                   :step)
+                                                  :delta-time-ms (if (= tick 0)
+                                                                   nil
+                                                                   (- (js/Date.now) last-render-time))}}))
                       :did-render (fn []
                                     (when (not (:operation-requested (deref state-atom)))
                                       (add-pending-operation!
