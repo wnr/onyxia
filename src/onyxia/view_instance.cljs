@@ -307,6 +307,18 @@
     :else
     vdom-element))
 
+(defn trigger-view-instance-event!
+  [view-instance event-name data]
+  (let [data (merge data
+                    ;; TODO: Not nice to merge like this.
+                    (get-view-input view-instance))
+        possible-observers (concat [(get-definition view-instance)]
+                                   (get-input-system-instances view-instance)
+                                   (get-output-definitions view-instance))]
+    (doseq [possible-observer possible-observers]
+      (when-let [event-fn (event-name possible-observer)]
+        (event-fn data)))))
+
 (defn render! [view-instance]
   (let [input (merge (get-view-input view-instance)
                      {:view-state-atom (get-view-state-atom view-instance)})]
@@ -317,13 +329,11 @@
 
 (defn did-render!
   [view-instance]
-  (let [definition (get-definition view-instance)]
-    (when-let [did-render-fn (:did-render definition)]
-      ;; TODO: Not nice to merge like this. What if some input to this view is called "element"?
-      (did-render-fn (merge {:element                (get-parent-element view-instance)
-                             :add-pending-operation! add-pending-operation!
-                             :view-state-atom        (get-view-state-atom view-instance)}
-                            (get-view-input view-instance))))))
+  (trigger-view-instance-event! view-instance
+                                :did-render
+                                {:element                (get-parent-element view-instance)
+                                 :add-pending-operation! add-pending-operation!
+                                 :view-state-atom        (get-view-state-atom view-instance)}))
 
 (defn did-mount!
   [view-instance {parent-element :parent-element}]
@@ -331,32 +341,18 @@
   (set-parent-element! view-instance parent-element)
   (set-has-been-mounted view-instance true)
   (set-mounted view-instance true)
-  (doseq [input-instance (get-input-system-instances view-instance)]
-    (when (:did-mount input-instance)
-      (add-pending-operation! ((:did-mount input-instance)
-                                {;; TODO: Should this be the root element of the view instead?
-                                 :element parent-element}))))
+  (trigger-view-instance-event! view-instance
+                                :did-mount
+                                {:element (get-parent-element view-instance)})
   (did-render! view-instance))
 
 (defn will-unmount!
   [view-instance]
-  ;; TODO: Should probably be signaled to view as well.
   (set-mounted view-instance false)
-  (doseq [input-instances (get-input-system-instances view-instance)]
-    (when (:will-unmount input-instances)
-      ;; Not adding to a pending operation here, because we do not have control of React/frameworks.
-      ;; We want to call the unmount signal before the view is unmounted.
-      ;; TODO: Can we take control over this?
-      ((:will-unmount input-instances)
-        {;; TODO: Should this be the root element of the view instead?
-         :element (get-parent-element view-instance)})))
-  (doseq [output (:output (get-definition view-instance))]
-    (let [[output-definition predefined-options] (get-output-definition (get-output-definitions view-instance) (:name output))]
-      (when (:will-unmount output-definition)
-        ((:will-unmount output-definition)
-          {;; TODO: Should this be the root element of the view instead?
-           :view-instance-id (get-id view-instance)
-           :element          (get-parent-element view-instance)})))))
+  (trigger-view-instance-event! view-instance
+                                :will-unmount
+                                {:view-instance-id (get-id view-instance)
+                                 :element          (get-parent-element view-instance)}))
 
 (defn handle-dom-event
   [view-instance {handlers :handlers

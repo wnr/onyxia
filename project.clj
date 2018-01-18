@@ -13,7 +13,7 @@
                  [cljsjs/react "15.4.2-2"]
                  [cljsjs/react-dom "15.4.2-2"]
                  [cljsjs/inferno "3.6.4-0"]
-                 [ysera "1.1.0"]]
+                 [ysera "1.2.0-SNAPSHOT"]]
 
   :plugins [[lein-figwheel "0.5.14"]
             [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]]

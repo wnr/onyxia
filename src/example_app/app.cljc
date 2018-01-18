@@ -1,6 +1,7 @@
 (ns example-app.app
   (:require [example-app.module.view.hearthstone.cards.id1.cards-table :as cards-table]
-            [example-app.module.view.hearthstone.cards.id1.button :as button]))
+            [example-app.module.view.hearthstone.cards.id1.button :as button]
+            [example-app.animation.sin-wave :as sin-wave]))
 
 (def cards-page-view-definition
   {:name   "cards-list-page-view"
@@ -22,14 +23,19 @@
                          [:header
                           [:nav {:class "navbar"}
                            [:h1 "Cards"]]]
-                         [:div {:style {:margin "20px"}}
-                          [:span {:style {:margin-right "20px"}}
-                           [button/button-view {:on-click [app-view-definition :on-click-1 nil]}
-                            "true"]]
-                          [button/button-view {:on-click [app-view-definition :on-click-2 nil]}
-                           "false"]
-                          [:div {:style {:margin-top "20px"}}
-                           (str (:foo view-state))]]
+                         [:div
+                          [:div {:style {:margin "20px"}}
+                           [:span {:style {:margin-right "20px"}}
+                            [button/button-view {:on-click [app-view-definition :on-click-1 nil]}
+                             "true"]]
+                           [button/button-view {:on-click [app-view-definition :on-click-2 nil]}
+                            "false"]
+                           [:div {:style {:margin-top "20px"}}
+                            (str (:foo view-state))]]]
+
                          [:div {:class "body"}
                           [cards-page-view-definition]]
-                         [:div {:class "footer"}]])})
+                         [:div {:class "footer"}]
+                         [:div {:style {:margin-top "20px"}}
+                          [sin-wave/view]]
+                         ])})

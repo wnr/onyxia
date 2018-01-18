@@ -1,57 +1,106 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="css/style.css" rel="stylesheet" type="text/css">
-  </head>
-  <body>
-    <div id="app">
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.2/react.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.6.1/react-dom.js"></script>
-    <script type="text/javascript">
-        "use strict";
+</head>
+<body>
+<div id="app">
+</div>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.2/react.js"></script>-->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.6.1/react-dom.js"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/inferno/3.10.1/inferno.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/inferno-create-element/3.10.1/inferno-create-element.js"></script>
+<script type="text/javascript">
+    "use strict";
 
-        var rows = [1, 2, 3];
+    var rows = [1, 2, 3];
 
-        function Paj(props) {
-            console.log(props.children);
-            return React.createElement(
-                "b",
+    function Paj(props) {
+        console.log(props.children);
+        return Inferno.createElement(
+            "b",
+            null,
+            props.children
+        );
+    }
+
+    function Lol(props) {
+        console.log(props.children);
+        return Inferno.createElement(
+            Paj,
+            null,
+            props.children
+        );
+    }
+
+    function Hello() {
+        return Inferno.createElement(
+            "div",
+            null,
+            Inferno.createElement(
+                "table",
+                null
+            ),
+            Inferno.createElement("img", {src: "lol"}),
+            Inferno.createElement(
+                Lol,
                 null,
-                props.children
-            );
+                Inferno.createElement("span", null),
+                Inferno.createElement("span", null)
+            )
+        );
+    }
+
+    var barCount = 128;
+    var barWidth = 100 / barCount;
+
+    function SinWave(props) {
+        var count = props.count;
+        var bars = [];
+        for (var i = 0; i < barCount; i++) {
+            var translateY = Math.sin(count / 10 + i / 5) * 100 * .5;
+            var hue = (360 / barCount * i - count) % 360;
+            var color = 'hsl(' + hue + ',95%,55%)';
+            var rotation = (count + i) % 360;
+            var barX = barWidth * i;
+            var style = {
+                position: "absolute",
+                height: "100%",
+                "border-radius": "50%",
+                "max-width": "10px",
+                width: barWidth + '%',
+                left: barX + '%',
+                transform: 'scale(0.8,.5) translateY(' + translateY + '%) rotate(' + rotation + 'deg)',
+                "background-color": color
+            };
+            bars.push(Inferno.createElement("div", {
+                style: style
+            }));
         }
 
-        function Lol(props) {
-            console.log(props.children);
-            return React.createElement(
-                Paj,
-                null,
-                props.children
-            );
-        }
+        return Inferno.createElement("div", {
+            style: {
+                height: "150px",
+                position: "relative",
+                overflow: "hidden"
+            }
+        }, bars);
 
-        function Hello() {
-            return React.createElement(
-                "div",
-                null,
-                React.createElement(
-                    "table",
-                    null
-                ),
-                React.createElement("img", { src: "lol" }),
-                React.createElement(
-                    Lol,
-                    null,
-                    React.createElement("span", null),
-                    React.createElement("span", null)
-                )
-            );
-        }
+    }
 
-        ReactDOM.render(React.createElement(Hello, null), document.getElementById('app'));
-    </script>
-  </body>
+    var count = 0;
+
+    function tick() {
+        Inferno.render(Inferno.createElement(SinWave, {count: count}), document.getElementById('app'));
+        requestAnimationFrame(function () {
+            count++;
+            tick();
+        });
+    }
+
+    tick();
+</script>
+</body>
 </html>

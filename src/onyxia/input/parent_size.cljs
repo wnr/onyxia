@@ -242,18 +242,20 @@
                                                 (on-state-changed)))]
                      {:ready?       (fn []
                                       (not (nil? (get-size-input-value @state-atom dimension))))
+                                      ;(not (nil? (get (get-size-input-value @state-atom dimension)
+                                      ;                (or dimension :width)))))
                       :get-input    (fn []
                                       {input-key (get-size-input-value @state-atom dimension)})
                       :did-mount    (fn [{element :element}]
                                       (install! {:element   element
                                                  :on-resize (fn [x]
                                                               (on-resize-listener x))})
-                                      {:operation :read-dom
-                                       :execute!  (fn []
-                                                    (swap! state-atom (fn [state]
-                                                                        (merge state {:width  (.-offsetWidth element)
-                                                                                      :height (.-offsetHeight element)})))
-                                                    (on-state-changed))})
+                                      (add-pending-operation! {:operation :read-dom
+                                                               :execute!  (fn []
+                                                                            (swap! state-atom (fn [state]
+                                                                                                (merge state {:width  (.-offsetWidth element)
+                                                                                                              :height (.-offsetHeight element)})))
+                                                                            (on-state-changed))}))
                       :will-unmount (fn [{element :element}]
                                       (handle-unmount! {:element      element
                                                         :root-element root-element
