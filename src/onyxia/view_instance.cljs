@@ -97,14 +97,17 @@
         input-definitions (get-input-definitions view-instance)]
     (set-input-system-instances-data! view-instance
                                       ; create a map that contains input instances and the configuration of them.
-                                      (map (fn [input]
-                                             (let [[input-definition render-tree-input-system-options] (get-input-definition input-definitions (:name input))]
-                                               {:instance ((:get-instance input-definition)
-                                                            (merge render-tree-input-system-options
-                                                                   (dissoc input :name)
-                                                                   {:on-state-changed on-state-changed
-                                                                    :root-element     root-element}))}))
-                                           (:input definition)))))
+                                      ; Important to not use map or any other lazy operation here, since lazyness and mutation does not go well together.
+                                      (reduce (fn [a input]
+                                                (conj a
+                                                      (let [[input-definition render-tree-input-system-options] (get-input-definition input-definitions (:name input))]
+                                                        {:instance ((:get-instance input-definition)
+                                                                     (merge render-tree-input-system-options
+                                                                            (dissoc input :name)
+                                                                            {:on-state-changed on-state-changed
+                                                                             :root-element     root-element}))})))
+                                              []
+                                              (:input definition)))))
 
 (defn all-input-system-instances-ready?
   [view-instance]
