@@ -10,7 +10,7 @@
                                            :last-tick        nil
                                            :last-render-time nil})]
                      {:ready?     (fn [] true)
-                      :get-value  (fn []
+                      :get-input  (fn []
                                     (let [{tick             :tick
                                            last-render-time :last-render-time} (deref state-atom)]
                                       {:tick          tick

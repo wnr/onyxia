@@ -46,8 +46,9 @@
 
 (def button-view
   {:name   "button"
-   :input  [{:name      "element-hovered"
-             :input-key :hovered}
+   :input  [{:name "element-hovered"
+             :keys [{:input  :hovered
+                     :update :element-hovered-value}]}
             {:name      "element-active"
              :input-key :active}]
    :render (fn [{hovered  :hovered

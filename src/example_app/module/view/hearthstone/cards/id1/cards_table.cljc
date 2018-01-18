@@ -63,8 +63,9 @@
 
 (def table
   {:name   "view.hearthstone.cards.id1/table"
-   :input  [{:name      "element-hovered"
-             :input-key :hovered-id}
+   :input  [{:name "element-hovered"
+             :keys [{:input  :hovered-id
+                     :update :element-hovered-value}]}
             {:name      "element-active"
              :input-key :active-id}]
    :render (fn [{thead      :thead
