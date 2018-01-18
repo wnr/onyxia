@@ -35,12 +35,14 @@
 (def definition
   {:name         "mouse-position"
    :get-instance (fn [{on-state-changed :on-state-changed
-                       should-update?   :should-update?}]
+                       should-update?   :should-update?
+                       input-key        :input-key}]
                    (let [should-update? (or should-update? (fn [] true))
                          on-this-instance-state-changed (fn [] (when (should-update?) (on-state-changed)))]
                      (swap! system-state-atom (fn [system-state]
                                                 (update-in system-state [:view-on-state-changed-fns] conj on-this-instance-state-changed)))
                      {:ready?       (fn [] true)
-                      :get-value    (fn [] (get-mouse-position-input-value @system-state-atom))
+                      :get-input    (fn []
+                                      {input-key (get-mouse-position-input-value @system-state-atom)})
                       :will-unmount (fn [_] (swap! system-state-atom (fn [system-state]
                                                                        (update-in system-state [:view-on-state-changed-fns] disj on-this-instance-state-changed))))}))})

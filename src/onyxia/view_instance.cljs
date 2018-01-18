@@ -86,26 +86,25 @@
   [view-instance]
   {:pre [view-instance]}
   (->> (get-input-system-instances-data view-instance)
-       (vals)
        (map :instance)))
 
 (defn init-input-systems!
+  "Inits input system instances for a view instance."
   [view-instance {on-state-changed :on-state-changed
                   root-element     :root-element}]
   {:pre [view-instance on-state-changed]}
   (let [definition (get-definition view-instance)
         input-definitions (get-input-definitions view-instance)]
-    (set-input-system-instances-data! view-instance (reduce (fn [inputs-state input]
-                                                              (let [[input-definition predefined-options] (get-input-definition input-definitions (:name input))]
-                                                                (assoc inputs-state
-                                                                  (:input-key input)
-                                                                  {:instance ((:get-instance input-definition)
-                                                                               (merge predefined-options
-                                                                                      (dissoc input :name :input-key)
-                                                                                      {:on-state-changed on-state-changed
-                                                                                       :root-element     root-element}))})))
-                                                            {}
-                                                            (:input definition)))))
+    (set-input-system-instances-data! view-instance
+                                      ; create a map that contains input instances and the configuration of them.
+                                      (map (fn [input]
+                                             (let [[input-definition render-tree-input-system-options] (get-input-definition input-definitions (:name input))]
+                                               {:instance ((:get-instance input-definition)
+                                                            (merge render-tree-input-system-options
+                                                                   (dissoc input :name)
+                                                                   {:on-state-changed on-state-changed
+                                                                    :root-element     root-element}))}))
+                                           (:input definition)))))
 
 (defn all-input-system-instances-ready?
   [view-instance]
@@ -173,13 +172,12 @@
 
 (defn compute-view-input
   [view-instance]
-  (reduce-kv (fn [view-input input-name {instance :instance}]
-               (assoc view-input
-                 input-name
-                 ((:get-value instance))))
-             (merge (get-parent-input view-instance)
-                    {:view-state (deref (get-view-state-atom view-instance))})
-             (get-input-system-instances-data view-instance)))
+  (reduce (fn [view-input {instance :instance}]
+            (merge view-input
+                   ((:get-input instance))))
+          (merge (get-parent-input view-instance)
+                 {:view-state (deref (get-view-state-atom view-instance))})
+          (get-input-system-instances-data view-instance)))
 
 (defn get-view-input
   [view-instance]

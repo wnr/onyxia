@@ -9,18 +9,19 @@
 (def definition
   {:name         "element-active"
    :get-instance (fn [{on-state-changed :on-state-changed
-                       should-update?   :should-update?}]
+                       should-update?   :should-update?
+                       input-key        :input-key}]
                    (if (disable-system?)
                      {:ready?                     (fn [] true)
-                      :get-value                  (fn [] nil)
+                      :get-input                  (fn [] {input-key nil})
                       :element-attribute-modifier (fn [{attributes :attributes}]
                                                     (when-let [element-active-id (:element-active-value attributes)]
                                                       (dissoc attributes :element-active-value)))}
                      (let [should-update? (or should-update? (fn [] true))
                            state-atom (atom {:active nil})]
                        {:ready?                     (fn [] true)
-                        :get-value                  (fn []
-                                                      (:active-id (deref state-atom)))
+                        :get-input                  (fn []
+                                                      {input-key (:active-id (deref state-atom))})
                         :element-attribute-modifier (fn [{attributes :attributes}]
                                                       (when-let [element-active-id (:element-active-value attributes)]
                                                         (-> attributes

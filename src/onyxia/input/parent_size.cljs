@@ -227,7 +227,8 @@
    :get-instance (fn [{on-state-changed :on-state-changed
                        dimension        :dimension
                        should-update?   :should-update?
-                       root-element     :root-element}]
+                       root-element     :root-element
+                       input-key        :input-key}]
                    (let [should-update? (or should-update? (fn [] true))
                          state-atom (atom {:width  nil
                                            :height nil})
@@ -241,8 +242,8 @@
                                                 (on-state-changed)))]
                      {:ready?       (fn []
                                       (not (nil? (get-size-input-value @state-atom dimension))))
-                      :get-value    (fn []
-                                      (get-size-input-value @state-atom dimension))
+                      :get-input    (fn []
+                                      {input-key (get-size-input-value @state-atom dimension)})
                       :did-mount    (fn [{element :element}]
                                       (install! {:element   element
                                                  :on-resize (fn [x]
