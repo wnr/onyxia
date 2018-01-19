@@ -109,7 +109,6 @@
                  ancestor-views-data :ancestor-views-data   ;; Optional. Needed if function locators are to be sent from a view to another.
                  view-instance       :view-instance         ;; Optional. Needed to activate view-specific input systems. If not present, only standard HTML attributes and such will be processed.
                  :as                 system-options}]
-  (ensure-global-inferno!)
   (cond
     (nil? vdom-element)
     nil
