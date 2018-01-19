@@ -65,37 +65,37 @@
                  (nthrest element 1)))))
 
 (defn formalize-element
-  ^{:test (fn []
-            (is= (formalize-element
-                   [:div])
-                 [:div {} []])
-            (is= (formalize-element
-                   [:div []])
-                 [:div {} [[]]])
-            (is= (formalize-element
-                   [:div {:attr true}])
-                 [:div {:attr true} []])
-            (is= (formalize-element
-                   [:div [:button] [:button]])
-                 [:div {} [[:button] [:button]]])
-            (is= (formalize-element
-                   [:div [[:button] [:button]]])
-                 [:div {} [[[:button] [:button]]]])
-            (is= (formalize-element
-                   [:div {:attr true} [:button]])
-                 [:div {:attr true} [[:button]]])
-            (is= (formalize-element
-                   [:div {:attr true} [[:button]]])
-                 [:div {:attr true} [[[:button]]]])
-            (is= (formalize-element
-                   [:h1 "Hello"])
-                 [:h1 {} ["Hello"]])
-            (is= (formalize-element
-                   [:h1 0])
-                 [:h1 {} [0]])
-            (is= (formalize-element
-                   [:div [:p] [[:a] [:b]]])
-                 [:div {} [[:p] [[:a] [:b]]]]))}
+  {:test (fn []
+           (is= (formalize-element
+                  [:div])
+                [:div {} []])
+           (is= (formalize-element
+                  [:div []])
+                [:div {} [[]]])
+           (is= (formalize-element
+                  [:div {:attr true}])
+                [:div {:attr true} []])
+           (is= (formalize-element
+                  [:div [:button] [:button]])
+                [:div {} [[:button] [:button]]])
+           (is= (formalize-element
+                  [:div [[:button] [:button]]])
+                [:div {} [[[:button] [:button]]]])
+           (is= (formalize-element
+                  [:div {:attr true} [:button]])
+                [:div {:attr true} [[:button]]])
+           (is= (formalize-element
+                  [:div {:attr true} [[:button]]])
+                [:div {:attr true} [[[:button]]]])
+           (is= (formalize-element
+                  [:h1 "Hello"])
+                [:h1 {} ["Hello"]])
+           (is= (formalize-element
+                  [:h1 0])
+                [:h1 {} [0]])
+           (is= (formalize-element
+                  [:div [:p] [[:a] [:b]]])
+                [:div {} [[:p] [[:a] [:b]]]]))}
   [element]
   (if (map? (second element))
     [(first element) (second element) (nthrest element 2)]
