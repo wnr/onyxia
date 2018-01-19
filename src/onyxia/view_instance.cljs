@@ -96,19 +96,29 @@
   {:pre [view-instance on-state-changed]}
   (let [definition (get-definition view-instance)
         available-input-definitions (get-available-input-definitions view-instance)]
-    (set-input-system-instances-data! view-instance
-                                      ; create a seq that contains input instances and the configuration of them.
-                                      ; Important to not use map or any other lazy operation here, since lazyness and mutation does not go well together.
-                                      (reduce (fn [a input]
-                                                (conj a
-                                                      (let [[input-definition render-tree-input-system-options] (get-input-definition available-input-definitions (:name input))]
-                                                        {:instance ((:get-instance input-definition)
-                                                                     (merge render-tree-input-system-options
-                                                                            (dissoc input :name)
-                                                                            {:on-state-changed on-state-changed
-                                                                             :root-element     root-element}))})))
-                                              '()
-                                              (:input definition)))))
+    (swap! view-instance (fn [view-instance-data]
+                           ; create a map that contains input instances and the configuration of them.
+                           ; Important to not use map or any other lazy operation here, since lazyness and mutation does not go well together.
+                           (let [input-instances-data (reduce (fn [a input]
+                                                                (conj a
+                                                                      (let [[input-definition render-tree-input-system-options] (get-input-definition available-input-definitions (:name input))]
+                                                                        {:instance ((:get-instance input-definition)
+                                                                                     (merge render-tree-input-system-options
+                                                                                            (dissoc input :name)
+                                                                                            {:on-state-changed on-state-changed
+                                                                                             :root-element     root-element}))})))
+                                                              '()
+                                                              (:input definition))]
+                             (assoc view-instance-data :input-instances-data input-instances-data
+                                                       :attribute-modifiers (let [modifiers (reduce (fn [a input-instances-data]
+                                                                                                      (if-let [modifier (get-in input-instances-data [:instance :element-attribute-modifier])]
+                                                                                                        (conj a)
+                                                                                                        a))
+                                                                                                    '()
+                                                                                                    input-instances-data)]
+                                                                              (if (empty? modifiers)
+                                                                                nil
+                                                                                modifiers))))))))
 
 (defn set-output-system-instances-data!
   [view-instance value]
@@ -294,16 +304,21 @@
                  (when (not= (:parent-input old-value) (:parent-input new-value))
                    (handle-possible-state-change))))))
 
+(defn- get-attribute-modifiers
+  [view-instance]
+  (:attribute-modifiers (deref view-instance)))
+
 (defn- modify-attributes
   [attributes {view-instance :view-instance}]
-  (reduce (fn [attributes input-instance]
-            (if-let [element-attribute-modifier (:element-attribute-modifier input-instance)]
-              (if-let [modified-attributes (element-attribute-modifier {:attributes attributes})]
-                modified-attributes
-                attributes)
-              attributes))
-          attributes
-          (get-input-system-instances view-instance)))
+  (let [modifiers (get-attribute-modifiers view-instance)]
+    (if (nil? modifiers)
+      attributes
+      (reduce (fn [attributes modifier]
+                (if-let [modified-attributes (modifier {:attributes attributes})]
+                  modified-attributes
+                  attributes))
+              attributes
+              modifiers))))
 
 (defn- prepare-element-tree
   [vdom-element {view-instance :view-instance :as system-options}]
