@@ -2,7 +2,7 @@
   (:require [ysera.test #?(:clj :refer :cljs :refer-macros) [is=]]
             [ysera.error :refer [error]]
             [onyxia.attributes-map :refer [kebab->camel]]
-            [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-events formalize-event-handlers]]))
+            [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-event formalize-event-handlers]]))
 
 (defn style->inferno-style
   "Maps a given style map to a inferno-flavored style map (with camelcased keys, etc.)."
@@ -18,24 +18,37 @@
 
 
 (defn map-attribute-events [attrs {on-dom-event :on-dom-event}]
-  (-> attrs
-      (map-default-attribute-events {:on-dom-event on-dom-event :attribute-keys [
-                                                                                 :on-blur
-                                                                                 :on-change
-                                                                                 :on-click
-                                                                                 :on-focus
-                                                                                 :on-input
-                                                                                 :on-mouse-down
-                                                                                 :on-mouse-enter
-                                                                                 :on-mouse-leave
-                                                                                 :on-mouse-up
-                                                                                 :on-key-down
-                                                                                 ]})
-      ;(change-attribute {:key     :on-xxx
-      ;                   :new-key :onYyy
-      ;                   :assoc   (fn [e]
-      ;                              (handle-dom-event {:attributes-key :on-xxx :type :on-xxx :event e}))}))
-      ))
+  (as-> attrs $
+        (if (contains? $ :on-blur)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-blur})
+          $)
+        (if (contains? $ :on-change)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-change})
+          $)
+        (if (contains? $ :on-click)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-click})
+          $)
+        (if (contains? $ :on-focus)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-focus})
+          $)
+        (if (contains? $ :on-input)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-input})
+          $)
+        (if (contains? $ :on-mouse-down)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-mouse-down})
+          $)
+        (if (contains? $ :on-mouse-enter)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-mouse-enter})
+          $)
+        (if (contains? $ :on-mouse-leave)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-mouse-leave})
+          $)
+        (if (contains? $ :on-mouse-up)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-mouse-up})
+          $)
+        (if (contains? $ :on-key-down)
+          (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-key-down})
+          $)))
 
 (defn map-to-inferno-attributes
   {:test (fn []

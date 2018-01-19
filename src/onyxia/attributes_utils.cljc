@@ -69,19 +69,25 @@
                                  (get $ key))))
             $))))
 
+(defn map-default-attribute-event
+  [attrs {on-dom-event  :on-dom-event
+          attribute-key :attribute-key}]
+  (let [handlers (formalize-event-handlers (get attrs attribute-key))]
+    (change-attribute attrs {:key     attribute-key
+                             :new-key (kebab->camel attribute-key)
+                             :assoc   (fn [e]
+                                        (on-dom-event {:type      attribute-key
+                                                       :dom-event :event
+                                                       :event     e
+                                                       :handlers  handlers}))})))
+
 (defn map-default-attribute-events
   [attrs {on-dom-event   :on-dom-event
-          attribute-keys :attribute-keys}]
+          attribute-keys :attribute-keys :as args}]
   (reduce (fn [attrs attribute-key]
             (if (contains? attrs attribute-key)
-              (let [handlers (formalize-event-handlers (get attrs attribute-key))]
-                (change-attribute attrs {:key     attribute-key
-                                         :new-key (kebab->camel attribute-key)
-                                         :assoc   (fn [e]
-                                                    (on-dom-event {:type      attribute-key
-                                                                   :dom-event :event
-                                                                   :event     e
-                                                                   :handlers  handlers}))}))
+              (map-default-attribute-event attrs {:on-dom-event  on-dom-event
+                                                  :attribute-key attribute-key})
               attrs))
           attrs
           attribute-keys))
