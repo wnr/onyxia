@@ -102,6 +102,9 @@
                                attributes)
                              args))
 
+(defn inferno-element? [vdom-element]
+  (not (nil? (.-type vdom-element))))
+
 (defn- create-inferno-element
   [vdom-element {on-dom-event        :on-dom-event
                  input-definitions   :input-definitions
@@ -120,7 +123,7 @@
     (str vdom-element)
 
     ;; Already processed Inferno element
-    (not (nil? (.-type vdom-element)))
+    (inferno-element? vdom-element)
     vdom-element
 
     ;; A "normal" HTML DOM element.
@@ -164,12 +167,14 @@
 
     ;; A sequence of elements
     (vdom/element-sequence? vdom-element)
-    (map (fn [node]
-           (let [node (if (vdom/element? node)
-                        (vdom/ensure-attributes-map node)
-                        node)]
-             (create-inferno-element node system-options)))
-         (vdom/clean-element-sequence vdom-element))
+    (reduce (fn [a node]
+              (if-let [result (create-inferno-element node system-options)]
+                (if (sequential? result)
+                  (into a result)
+                  (conj a result))
+                a))
+            '()
+            vdom-element)
 
     :else
     (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
