@@ -9,8 +9,8 @@
   [style]
   (reduce (fn [inferno-style [key value]]
             (let [string-value (if (number? value)
-                          (str value)
-                          (name value))
+                                 (str value)
+                                 (name value))
                   inferno-key (kebab->camel key)]
               (assoc inferno-style inferno-key string-value)))
           {}
