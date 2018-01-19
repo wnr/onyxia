@@ -6,10 +6,8 @@
                                     :write-dom []}))
 
 (defn- execute-operations-seq! [seq]
-  (reduce (fn [_ operation]
-            ((:execute! operation)))
-          nil
-          seq))
+  (doseq [operation seq]
+    ((:execute! operation))))
 
 (defn execute-pending-operations! []
   (let [pending-operations @pending-operations-atom]
