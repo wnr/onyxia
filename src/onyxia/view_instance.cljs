@@ -12,24 +12,25 @@
   (:counter (swap! system-state-atom update :counter inc)))
 
 (defn create-view-instance
-  [{definition          :definition
-    input-definitions   :input-definitions
-    output-definitions  :output-definitions
-    ancestor-views-data :ancestor-views-data
-    render!             :render!}]
-  (atom {:definition               definition
-         :input-definitions        (formalize-input-definitions input-definitions)
-         :output-definitions       (formalize-output-definitions output-definitions)
-         :ancestor-views-data      ancestor-views-data
-         :render!                  render!
-         :input-instances-data     nil
-         :parent-element           nil
-         :parent-input             nil
-         :mounted                  false
-         :has-been-mounted         false
-         :last-rendered-view-input nil
-         :current-view-input       nil
-         :id                       (generate-new-view-id!)}))
+  [{definition                   :definition
+    available-input-definitions  :input-definitions
+    available-output-definitions :output-definitions
+    ancestor-views-data          :ancestor-views-data
+    render!                      :render!}]
+  (atom {:definition                   definition
+         :available-input-definitions  (formalize-input-definitions available-input-definitions)
+         :input-instances-data         nil
+         :available-output-definitions (formalize-output-definitions available-output-definitions)
+         :output-instances-data        nil
+         :ancestor-views-data          ancestor-views-data
+         :render!                      render!
+         :parent-element               nil
+         :parent-input                 nil
+         :mounted                      false
+         :has-been-mounted             false
+         :last-rendered-view-input     nil
+         :current-view-input           nil
+         :id                           (generate-new-view-id!)}))
 
 (defn get-id
   [view-instance]
@@ -39,13 +40,13 @@
   [view-instance]
   (:definition (deref view-instance)))
 
-(defn get-input-definitions
+(defn get-available-input-definitions
   [view-instance]
-  (:input-definitions (deref view-instance)))
+  (:available-input-definitions (deref view-instance)))
 
-(defn get-output-definitions
+(defn get-available-output-definitions
   [view-instance]
-  (:output-definitions (deref view-instance)))
+  (:available-output-definitions (deref view-instance)))
 
 (defn get-ancestor-views-data
   [view-instance]
@@ -94,20 +95,53 @@
                   root-element     :root-element}]
   {:pre [view-instance on-state-changed]}
   (let [definition (get-definition view-instance)
-        input-definitions (get-input-definitions view-instance)]
+        available-input-definitions (get-available-input-definitions view-instance)]
     (set-input-system-instances-data! view-instance
-                                      ; create a map that contains input instances and the configuration of them.
+                                      ; create a seq that contains input instances and the configuration of them.
                                       ; Important to not use map or any other lazy operation here, since lazyness and mutation does not go well together.
                                       (reduce (fn [a input]
                                                 (conj a
-                                                      (let [[input-definition render-tree-input-system-options] (get-input-definition input-definitions (:name input))]
+                                                      (let [[input-definition render-tree-input-system-options] (get-input-definition available-input-definitions (:name input))]
                                                         {:instance ((:get-instance input-definition)
                                                                      (merge render-tree-input-system-options
                                                                             (dissoc input :name)
                                                                             {:on-state-changed on-state-changed
                                                                              :root-element     root-element}))})))
-                                              []
+                                              '()
                                               (:input definition)))))
+
+(defn set-output-system-instances-data!
+  [view-instance value]
+  {:pre [view-instance]}
+  (swap! view-instance assoc :output-instances-data value))
+
+(defn get-output-system-instances-data
+  [view-instance]
+  {:pre [view-instance]}
+  (:output-instances-data (deref view-instance)))
+
+(defn get-output-system-instances
+  [view-instance]
+  {:pre [view-instance]}
+  (->> (get-output-system-instances-data view-instance)
+       (map :instance)))
+
+(defn init-output-systems!
+  [view-instance {on-state-changed :on-state-changed
+                  root-element     :root-element}]
+  (let [definition (get-definition view-instance)
+        available-output-defintions (get-available-output-definitions view-instance)]
+    (set-output-system-instances-data! view-instance
+                                       ; create a seq that contains output definitions and the configuration of them.
+                                       ; Important to not use map or any other lazy operation here, since lazyness and mutation does not go well together.
+                                       (reduce (fn [a output]
+                                                 (conj a
+                                                       (let [[output-definition render-tree-input-system-options] (get-output-definition available-output-defintions (:name output))]
+                                                         {:instance                         output-definition
+                                                          :options                          output
+                                                          :render-tree-input-system-options render-tree-input-system-options})))
+                                               '()
+                                               (:output definition)))))
 
 (defn all-input-system-instances-ready?
   [view-instance]
@@ -217,20 +251,21 @@
   [view-instance]
   (when (should-render? view-instance)
     (let [definition (get-definition view-instance)
-          input-definitions (get-input-definitions view-instance)
-          output-definitions (get-output-definitions view-instance)]
-      (doseq [output (:output definition)]
-        (let [[output-definition predefined-options] (get-output-definition output-definitions (:name output))]
-          ((:handle! output-definition)
-            (merge predefined-options
-                   {:view-output         output
-                    :view-state          (get-view-input view-instance)
-                    :view-state-atom     (get-view-state-atom view-instance)
-                    :render!             (get-render-fn view-instance)
-                    :input-definitions   input-definitions
-                    :output-definitions  output-definitions
-                    :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})
-                    :view-instance-id    (get-id view-instance)})))))))
+          available-input-definitions (get-available-input-definitions view-instance)
+          available-output-definitions (get-available-output-definitions view-instance)]
+      (doseq [{instance                         :instance
+               options                          :options
+               render-tree-input-system-options :render-tree-input-system-options} (get-output-system-instances-data view-instance)]
+        ((:handle! instance)
+          (merge render-tree-input-system-options
+                 {:view-output         options
+                  :view-state          (get-view-input view-instance)
+                  :view-state-atom     (get-view-state-atom view-instance)
+                  :render!             (get-render-fn view-instance)
+                  :input-definitions   available-input-definitions
+                  :output-definitions  available-output-definitions
+                  :ancestor-views-data (assoc (get-ancestor-views-data view-instance) definition {:view-state-atom (get-view-state-atom view-instance)})
+                  :view-instance-id    (get-id view-instance)}))))))
 
 (defn will-mount!
   [view-instance {parent-input     :parent-input
@@ -247,6 +282,8 @@
     (set-parent-input! view-instance parent-input)
     (init-input-systems! view-instance {:on-state-changed handle-possible-state-change
                                         :root-element     root-element})
+    (init-output-systems! view-instance {:on-state-changed handle-possible-state-change
+                                         :root-element     root-element})
     (add-watch (get-view-state-atom view-instance)
                :on-state-changed-notifier
                (fn [_ _ old-value new-value]
@@ -317,7 +354,7 @@
                     (get-view-input view-instance))
         possible-observers (concat [(get-definition view-instance)]
                                    (get-input-system-instances view-instance)
-                                   (get-output-definitions view-instance))]
+                                   (get-output-system-instances view-instance))]
     (doseq [possible-observer possible-observers]
       (when-let [event-fn (event-name possible-observer)]
         (event-fn data)))))
