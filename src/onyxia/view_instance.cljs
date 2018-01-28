@@ -112,7 +112,7 @@
                              (assoc view-instance-data :input-instances-data input-instances-data
                                                        :attribute-modifiers (let [modifiers (reduce (fn [a input-instances-data]
                                                                                                       (if-let [modifier (get-in input-instances-data [:instance :element-attribute-modifier])]
-                                                                                                        (conj a)
+                                                                                                        (conj a modifier)
                                                                                                         a))
                                                                                                     '()
                                                                                                     input-instances-data)]
