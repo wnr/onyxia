@@ -13,7 +13,7 @@
                  [cljsjs/react "15.4.2-2"]
                  [cljsjs/react-dom "15.4.2-2"]
                  [cljsjs/inferno "3.6.4-0"]
-                 [ysera "1.2.0-SNAPSHOT"]]
+                 [ysera "1.2.0"]]
 
   :plugins [[lein-figwheel "0.5.14"]
             [lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]]
@@ -34,8 +34,7 @@
                            ;; in the default browser once Figwheel has
                            ;; started and complied your application.
                            ;; Comment this out once it no longer serves you.
-                           ;; :open-urls ["http://localhost:3449/index.html"]
-                           }
+                           :open-urls ["http://localhost:3448/index.html"]}
 
                 :compiler {:main example-app.main
                            :asset-path "js/compiled/out"
