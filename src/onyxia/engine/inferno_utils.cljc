@@ -4,20 +4,8 @@
             [onyxia.attributes-map :refer [kebab->camel]]
             [onyxia.attributes-utils :refer [replace-key replace-value change-attribute map-default-attribute-event formalize-event-handlers]]))
 
-(defn style->inferno-style
-  "Maps a given style map to a inferno-flavored style map (with camelcased keys, etc.)."
-  [style]
-  (reduce (fn [inferno-style [key value]]
-            (let [string-value (if (number? value)
-                                 (str value)
-                                 (name value))
-                  inferno-key (kebab->camel key)]
-              (assoc inferno-style inferno-key string-value)))
-          {}
-          style))
-
-
 (defn map-attribute-events [attrs {on-dom-event :on-dom-event}]
+  ;; TODO: A macro would be nice for this.
   (as-> attrs $
         (if (contains? $ :on-blur)
           (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-blur})
@@ -50,27 +38,114 @@
           (map-default-attribute-event $ {:on-dom-event on-dom-event :attribute-key :on-key-down})
           $)))
 
+(defn style->inferno-style
+  "Maps a given style map to a inferno-flavored style map (with camelcased keys, etc.)."
+  [style]
+  (reduce (fn [inferno-style [key value]]
+            (let [string-value (if (number? value)
+                                 (str value)
+                                 (name value))
+                  inferno-key (kebab->camel key)]
+              (assoc inferno-style inferno-key string-value)))
+          {}
+          style))
+
+(defn map-attribute-style
+  [attrs _]
+  (if (contains? attrs :style)
+    (update attrs :style (fn [style]
+                           ;; Fix unitless style properties, see https://github.com/infernojs/inferno/pull/1256
+                           ;; TODO: A macro would be nice for this.
+                           (as-> style $
+                                 (if (contains? $ :animation-iteration-count)
+                                   (update $ :animation-iteration-count str)
+                                   $)
+                                 (if (contains? $ :border-image-outset)
+                                   (update $ :border-image-outset str)
+                                   $)
+                                 (if (contains? $ :border-image-slice)
+                                   (update $ :border-image-slice str)
+                                   $)
+                                 (if (contains? $ :border-image-width)
+                                   (update $ :border-image-width str)
+                                   $)
+                                 (if (contains? $ :box-flex)
+                                   (update $ :box-flex str)
+                                   $)
+                                 (if (contains? $ :box-flex-group)
+                                   (update $ :box-flex-group str)
+                                   $)
+                                 (if (contains? $ :box-ordinal-group)
+                                   (update $ :box-ordinal-group str)
+                                   $)
+                                 (if (contains? $ :column-count)
+                                   (update $ :column-count str)
+                                   $)
+                                 (if (contains? $ :flex-grow)
+                                   (update $ :flex-grow str)
+                                   $)
+                                 (if (contains? $ :flex-positive)
+                                   (update $ :flex-positive str)
+                                   $)
+                                 (if (contains? $ :flex-shrink)
+                                   (update $ :flex-shrink str)
+                                   $)
+                                 (if (contains? $ :flex-negative)
+                                   (update $ :flex-negative str)
+                                   $)
+                                 (if (contains? $ :flex-order)
+                                   (update $ :flex-order str)
+                                   $)
+                                 (if (contains? $ :grid-row)
+                                   (update $ :grid-row str)
+                                   $)
+                                 (if (contains? $ :grid-column)
+                                   (update $ :grid-column str)
+                                   $)
+                                 (if (contains? $ :font-weight)
+                                   (update $ :font-weight str)
+                                   $)
+                                 (if (contains? $ :line-clamp)
+                                   (update $ :line-clamp str)
+                                   $)
+                                 (if (contains? $ :line-height)
+                                   (update $ :line-height str)
+                                   $)
+                                 (if (contains? $ :tab-size)
+                                   (update $ :tab-size str)
+                                   $)
+                                 (if (contains? $ :z-index)
+                                   (update $ :z-index str)
+                                   $)
+                                 (if (contains? $ :fill-opacity)
+                                   (update $ :fill-opacity str)
+                                   $)
+                                 (if (contains? $ :flood-opacity)
+                                   (update $ :flood-opacity str)
+                                   $)
+                                 (if (contains? $ :stop-opacity)
+                                   (update $ :stop-opacity str)
+                                   $)
+                                 (if (contains? $ :stroke-dasharray)
+                                   (update $ :stroke-dasharray str)
+                                   $)
+                                 (if (contains? $ :stroke-dashoffset)
+                                   (update $ :stroke-dashoffset str)
+                                   $)
+                                 (if (contains? $ :stroke-miterlimit)
+                                   (update $ :stroke-miterlimit str)
+                                   $)
+                                 (if (contains? $ :stroke-opacity)
+                                   (update $ :stroke-opacity str)
+                                   $)
+                                 (if (contains? $ :stroke-width)
+                                   (update $ :stroke-width str)
+                                   $))))
+    attrs))
+
 (defn map-to-inferno-attributes
-  {:test (fn []
-           ;; Keep unknown attributes unchanged.
-           (is= (map-to-inferno-attributes {:unknown "test"} {})
-                {:unknown "test"})
-           ;; :class -> :className
-           (is= (map-to-inferno-attributes {:class "foo bar"} {})
-                {:className "foo bar"})
-           ;; :style -> :style (with values changed to inferno-flavor).
-           (is= (map-to-inferno-attributes {:style {"padding-left" ""}} {})
-                {:style {"paddingLeft" ""}})
-           ;; Map special SVG attributes
-           (is= (map-to-inferno-attributes {:text-anchor "foo" :xlink:href "bar"} {})
-                {"textAnchor" "foo" "xlinkHref" "bar"}))}
+  {}
   [attrs args]
   (-> attrs
-      ;(change-attribute {:key :class :new-key :className})
-      ;(change-attribute {:key :for :new-key :htmlFor})
-      ;(change-attribute {:key :charset :new-key :charSet})
       (map-attribute-events args)
-      ;; Seems like Inferno supports snake-case styles. Or does it just pass it along to the DOM and modern browsers just happen to support it?
-      ;; anyway, should not do this very expensive operation if not really needed (old browsers)...
-      ;(change-attribute {:key :style :update style->inferno-style})
-      ))
+      (map-attribute-style args)))
