@@ -1,4 +1,4 @@
-(defproject onyxia "0.3.1-SNAPSHOT"
+(defproject onyxia "0.3.1"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
