@@ -79,7 +79,9 @@
                                   :onStateChanged            (fn []
                                                                (this-as component
                                                                  (let [view-instance (aget component "viewInstance")]
-                                                                   (.setState component {:view-input (vi/get-view-input view-instance)})))
+                                                                   ;; We actually do not need to store any data in the component state.
+                                                                   ;; But we need to call it in order to get a render.
+                                                                   (.setState component #js{})))
                                                                nil)})))
 
 (defn- get-component
@@ -91,6 +93,16 @@
         (swap! component-cache assoc arguments component)
         component))))
 
+(defn- modify-attributes
+  [attributes {view-instance :view-instance :as args}]
+  (map-to-react-attributes (if view-instance
+                             (vi/modify-attributes attributes args)
+                             attributes)
+                           args))
+
+(defn react-element? [vdom-element]
+  (not (nil? (.-$$typeof vdom-element))))
+
 (defn- create-react-element
   [vdom-element {on-dom-event        :on-dom-event
                  input-definitions   :input-definitions
@@ -98,6 +110,7 @@
                  ancestor-views-data :ancestor-views-data   ;; Optional. Needed if function locators are to be sent from a view to another.
                  view-instance       :view-instance         ;; Optional. Needed to activate view-specific input systems. If not present, only standard HTML attributes and such will be processed.
                  root-element        :root-element
+                 key                 :key
                  :as                 system-options}]
   (cond
     (nil? vdom-element)
@@ -109,41 +122,62 @@
     (number? vdom-element)
     (str vdom-element)
 
+    ;; Already processed React element
+    (react-element? vdom-element)
+    vdom-element
+
+    ;; A "normal" HTML DOM element.
+    (keyword? (first vdom-element))
+    (let [vdom-element (vdom/formalize-element vdom-element)
+          attributes (second vdom-element)
+          children (nth vdom-element 2)
+          attributes (if key
+                       (update attributes :key (fn [k]
+                                                 (or k key)))
+                       attributes)
+          attributes (modify-attributes attributes {:view-instance view-instance
+                                                    :on-dom-event  on-dom-event})
+          children (map (fn [child]
+                          (create-react-element child system-options))
+                        children)
+          system-options (dissoc system-options :key)
+          react-element-args (concat [(name (first vdom-element))
+                                      (clj->js attributes)]
+                                     (clj->js (map (fn [child]
+                                                     (create-react-element child system-options))
+                                                   children)))]
+      (apply js/React.createElement react-element-args))
+
     ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
     (vdom/view? vdom-element)
     (let [view vdom-element
           definition (vdom/get-view-definition view)
-          input (second vdom-element)]
+          system-options (dissoc system-options :key)
+          input (-> (vdom/get-view-input view)
+                    (update :children (fn [children]
+                                        (map (fn [child]
+                                               (create-react-element child system-options))
+                                             children))))]
       (js/React.createElement (get-component {:definition          definition
                                               :input-definitions   input-definitions
                                               :output-definitions  output-definitions
                                               :ancestor-views-data ancestor-views-data
                                               :root-element        root-element})
-                              (if-let [key (:key input)]
+                              (if-let [key (or (:key input) key)]
+                                ;; TODO: Do we need to send input like this?
                                 #js{:input input
                                     :key   key}
                                 #js{:input input})))
 
-    ;; A "normal" HTML DOM element.
-    (keyword? (first vdom-element))
-    (let [attributes (second vdom-element)
-          children (nth vdom-element 2)
-          react-element-args (concat [(name (first vdom-element))
-                                      (clj->js (map-to-react-attributes attributes {:on-dom-event on-dom-event}))]
-                                     (clj->js (if (and (= (count children) 1)
-                                                       (or (string? (first children))
-                                                           (number? (first children))))
-                                                [(first children)]
-                                                (map (fn [child]
-                                                       (create-react-element child system-options))
-                                                     children))))]
-      (apply js/React.createElement react-element-args))
-
-    ;; A sequence of elements (that will need to be handled as such for React with keys etc).
     (vdom/element-sequence? vdom-element)
-    (map (fn [node]
-           (create-react-element node system-options))
-         vdom-element)
+    (reduce (fn [a [index node]]
+              (if-let [result (create-react-element node (assoc system-options :key index))]
+                (if (sequential? result)
+                  (into a result)
+                  (conj a result))
+                a))
+            []
+            (map-indexed (fn [x y] [x y]) vdom-element))
 
     :else
     (throw (js/Error (str "Unknown vdom element: " vdom-element)))))
@@ -158,10 +192,9 @@
   (ensure-global-react!)
   (if (nil? view)
     (js/ReactDOM.unmountComponentAtNode target-element)
-    (let [react-element (-> (vi/prepare-element-tree view {})
-                            (create-react-element {:input-definitions   input-definitions
-                                                   :output-definitions  output-definitions
-                                                   :on-dom-event        (fn [_])
-                                                   :ancestor-views-data ancestor-views-data
-                                                   :root-element        target-element}))]
+    (let [react-element (create-react-element view
+                                              {:input-definitions   input-definitions
+                                               :output-definitions  output-definitions
+                                               :on-dom-event        (fn [_])
+                                               :ancestor-views-data ancestor-views-data})]
       (js/ReactDOM.render react-element target-element))))
