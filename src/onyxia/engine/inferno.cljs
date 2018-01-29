@@ -173,7 +173,7 @@
                   (into a result)
                   (conj a result))
                 a))
-            '()
+            []
             vdom-element)
 
     :else
