@@ -86,6 +86,28 @@
                                                                      (.setState component nil)))
                                                                  nil)})))
 
+(def lifecycle-component (js/Inferno.createClass (clj->js {:displayName          "LifecycleComponent"
+                                                           :render               (fn []
+                                                                                   (this-as component
+                                                                                     (let [jsprops (.-onyxiaProps (.-props component))
+                                                                                           vdom-element (:vdom-element jsprops)
+                                                                                           system-options (:system-options jsprops)]
+                                                                                       (create-inferno-element (update vdom-element 1 (fn [attributes]
+                                                                                                                                        (-> attributes
+                                                                                                                                            (dissoc :on-will-unmount)
+                                                                                                                                            (assoc :ref (fn [element] (aset component "_lifecycleElement" element))))))
+                                                                                                               system-options))))
+                                                           :componentWillUnmount (fn []
+                                                                                   (this-as component
+                                                                                     (js/console.log "unmount" (aget component "_lifecycleElement"))
+                                                                                     (let [jsprops (.-onyxiaProps (.-props component))
+                                                                                           vdom-element (:vdom-element jsprops)
+                                                                                           system-options (:system-options jsprops)
+                                                                                           on-will-unmount (:on-will-unmount (second vdom-element))]
+                                                                                       (and on-will-unmount ((first on-will-unmount)
+                                                                                                              {:element (aget component "_lifecycleElement")}))))
+                                                                                   nil)})))
+
 (defn- get-component
   [arguments]
   (let [cached-component (get @component-cache arguments)]
@@ -128,20 +150,25 @@
 
     ;; A "normal" HTML DOM element.
     (keyword? (first vdom-element))
-    (let [vdom-element (vdom/formalize-element vdom-element)
-          attributes (second vdom-element)
-          children (nth vdom-element 2)
-          attributes (modify-attributes attributes {:view-instance view-instance
-                                                    :on-dom-event  on-dom-event})
-          children (map (fn [child]
-                          (create-inferno-element child system-options))
-                        children)
-          inferno-element-args (concat [(name (first vdom-element))
-                                        (clj->js attributes)]
-                                       (clj->js (map (fn [child]
-                                                       (create-inferno-element child system-options))
-                                                     children)))]
-      (apply js/Inferno.createElement inferno-element-args))
+    (let [original-vdom-element vdom-element
+          vdom-element (vdom/formalize-element vdom-element)
+          attributes (-> (second vdom-element)
+                         (modify-attributes {:view-instance view-instance
+                                             :on-dom-event  on-dom-event}))]
+      (if (contains? attributes :on-will-unmount)
+        (js/Inferno.createElement lifecycle-component #js {:onyxiaProps {:vdom-element   (assoc original-vdom-element 1 attributes)
+                                                                         :system-options system-options}
+                                                           :key         (:key attributes)})
+        (let [children (nth vdom-element 2)
+              children (map (fn [child]
+                              (create-inferno-element child system-options))
+                            children)
+              inferno-element-args (concat [(name (first vdom-element))
+                                            (clj->js attributes)]
+                                           (clj->js (map (fn [child]
+                                                           (create-inferno-element child system-options))
+                                                         children)))]
+          (apply js/Inferno.createElement inferno-element-args))))
 
     ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
     (vdom/view? vdom-element)

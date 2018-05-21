@@ -95,7 +95,10 @@
                 [:h1 {} [0]])
            (is= (formalize-element
                   [:div [:p] [[:a] [:b]]])
-                [:div {} [[:p] [[:a] [:b]]]]))}
+                [:div {} [[:p] [[:a] [:b]]]])
+           (is= (formalize-element
+                  [:li {} nil nil [:div]])
+                [:li {} [nil nil [:div]]]))}
   [element]
   (if (map? (second element))
     [(first element) (second element) (nthrest element 2)]
