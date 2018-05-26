@@ -99,7 +99,6 @@
                                                                                                                system-options))))
                                                            :componentWillUnmount (fn []
                                                                                    (this-as component
-                                                                                     (js/console.log "unmount" (aget component "_lifecycleElement"))
                                                                                      (let [jsprops (.-onyxiaProps (.-props component))
                                                                                            vdom-element (:vdom-element jsprops)
                                                                                            system-options (:system-options jsprops)
