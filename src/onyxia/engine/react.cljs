@@ -103,6 +103,28 @@
 (defn react-element? [vdom-element]
   (not (nil? (.-$$typeof vdom-element))))
 
+(def lifecycle-component (js/React.createClass (clj->js {:displayName          "LifecycleComponent"
+                                                         :render               (fn []
+                                                                                 (this-as component
+                                                                                   (let [jsprops (.-onyxiaProps (.-props component))
+                                                                                         vdom-element (:vdom-element jsprops)
+                                                                                         system-options (:system-options jsprops)]
+                                                                                     (create-react-element (update vdom-element 1 (fn [attributes]
+                                                                                                                                    (-> attributes
+                                                                                                                                        (dissoc :on-will-unmount)
+                                                                                                                                        (assoc :ref (fn [element] (aset component "_lifecycleElement" element))))))
+                                                                                                           system-options))))
+                                                         :componentWillUnmount (fn []
+                                                                                 (this-as component
+                                                                                   (let [jsprops (.-onyxiaProps (.-props component))
+                                                                                         vdom-element (:vdom-element jsprops)
+                                                                                         system-options (:system-options jsprops)
+                                                                                         on-will-unmount (:on-will-unmount (second vdom-element))]
+                                                                                     (and on-will-unmount ((first on-will-unmount)
+                                                                                                            {:element (aget component "_lifecycleElement")}))))
+                                                                                 nil)})))
+
+
 (defn- create-react-element
   [vdom-element {on-dom-event        :on-dom-event
                  input-definitions   :input-definitions
@@ -128,25 +150,30 @@
 
     ;; A "normal" HTML DOM element.
     (keyword? (first vdom-element))
-    (let [vdom-element (vdom/formalize-element vdom-element)
+    (let [original-vdom-element vdom-element
+          vdom-element (vdom/formalize-element vdom-element)
           attributes (second vdom-element)
-          children (nth vdom-element 2)
           attributes (if key
                        (update attributes :key (fn [k]
                                                  (or k key)))
                        attributes)
-          attributes (modify-attributes attributes {:view-instance view-instance
-                                                    :on-dom-event  on-dom-event})
-          children (map (fn [child]
-                          (create-react-element child system-options))
-                        children)
-          system-options (dissoc system-options :key)
-          react-element-args (concat [(name (first vdom-element))
-                                      (clj->js attributes)]
-                                     (clj->js (map (fn [child]
-                                                     (create-react-element child system-options))
-                                                   children)))]
-      (apply js/React.createElement react-element-args))
+          attributes (-> attributes
+                         (modify-attributes {:view-instance view-instance
+                                             :on-dom-event  on-dom-event}))]
+      (if (contains? attributes :on-will-unmount)
+        (js/React.createElement lifecycle-component #js {:onyxiaProps {:vdom-element   (assoc original-vdom-element 1 attributes)
+                                                                       :system-options system-options}
+                                                         :key         (:key attributes)})
+        (let [children (nth vdom-element 2)
+              children (map (fn [child]
+                              (create-react-element child system-options))
+                            children)
+              react-element-args (concat [(name (first vdom-element))
+                                          (clj->js attributes)]
+                                         (clj->js (map (fn [child]
+                                                         (create-react-element child system-options))
+                                                       children)))]
+          (apply js/React.createElement react-element-args))))
 
     ;; A view (tree structure of html elements with a lifecycle) is to be rendered.
     (vdom/view? vdom-element)
